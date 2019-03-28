@@ -1,8 +1,8 @@
 # bamcli
 
-  bamcli is a CLI (Command Line Interface) to
-  BAM (BlueCat Address Manager). It uses the
-  BAM Python API.
+bamcli is a CLI (Command Line Interface) to
+BAM (BlueCat Address Manager). It uses the
+BAM Python API.
 
   DNS data can be created/deleted/changed and viewed
   via this intereface.
