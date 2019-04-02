@@ -1,4 +1,4 @@
-# bamcli
+## bamcli
 
 bamcli is a CLI (Command Line Interface) to
 BAM (BlueCat Address Manager). It uses the
