@@ -1,0 +1,3 @@
+export BAM_USER=fred
+export BAM_PW='Flintstones_R_4ever!'
+export BAM_API_URL='https://bam.bigcorp.ca/Services/REST/v1/'
