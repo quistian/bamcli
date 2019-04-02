@@ -1919,9 +1919,10 @@ def find_rr(fqdn, *argv):
             for ent in rr_ents:
                 d = props2dict(ent['properties'])
                 values = d[obj_rr_key]
+                print('to be deleted: {} currently there {}'.format(value, values))
                 if rr_type == 'A':
-                    ips = values.split(',')
-                    if value in ips:
+                    current_ips = values.split(',')
+                    if value in current_ips:
                         found = True
                         rr_ents = [ent]
                         break
@@ -1956,13 +1957,28 @@ def view_rr(fqdn, *argv):
 #
 
 def bind_print(ent_ids):
+    if len(ent_ids) == 0:
+        print('No RRs to display')
+        return
+    str_lens = []
     for ent_id in ent_ids:
         ent = get_entity_by_id(ent_id)
-        fmt_str = '{:<20} IN {:>5} {:<6} {}'
-        mx_str = fmt_str + ' {}'
         d = props2dict(ent['properties'])
         fqdn = d['absoluteName']
-        ttl = d['ttl']
+        str_lens.append(len(fqdn))
+    maxlen = max(str_lens)
+    fmt_str = '{:<' + str(maxlen+4) + '} IN {:>5} {:<6} {}'
+    mx_str = fmt_str + ' {}'
+    for ent_id in ent_ids:
+        ent = get_entity_by_id(ent_id)
+        d = props2dict(ent['properties'])
+        fqdn = d['absoluteName']
+        if 'ttl' in d.keys():
+            ttl = d['ttl']
+        else:
+            ttl = d['ttl'] = '86400'
+            ent['properties'] = dict2props(d)
+            update_object(ent)
         if ttl == '86400':
             ttl = '     '
         rr_type = BAM2Bind[ent['type']]
@@ -2185,12 +2201,12 @@ def delete_rr(fqdn, *argv):
                         d[obj_prop_key] = ','.join(ips)
                         ent['properties'] = dict2props(d)
                         print('Removing IP address: {} from RR(s):'.format(value))
-                        bind_print([obj_id])
                         update_object(ent)
+                        bind_print([obj_id])
                     else:
                         print('Removing RR {} with IP address: {}'.format(fqdn, value))
-                        bind_print([obj_id])
                         delete(obj_id)
+                        bind_print([obj_id])
                 elif rr_type == 'TXT' or rr_type == 'CNAME' or rr_type == 'MX':
                     print('Removing {} record'.format(rr_type))
                     bind_print([obj_id])
@@ -2313,9 +2329,9 @@ def add_rr(fqdn, rr_type, value, ttl):
             ips = tuple(new_ips)
             for ip in ips:
                 obj = get_ipranged_by_ip(ip)
-                if obj['id'] == 0:
+                if type(obj) is str or obj['id'] == 0:
                     new_ips.remove(ip)
-                    print('{} is not in a defined network space'.format(ip))
+                    print('The IP Address {} is not in a defined network space'.format(ip))
             if len(new_ips) == 0:
                 print('No legal IP addresses to add')
                 return 0
@@ -2479,7 +2495,25 @@ def update_rr(fqdn, rr_type, value, ttl):
         d['priority'] = priority
         d['ttl'] = ttl
         ent['properties'] = dict2props(d)
-    elif rr_type == 'A' or rr_type == 'TXT' or rr_type == 'CNAME':
+    elif rr_type == 'A':
+        org_value = value
+        new_ips = value.split(',')
+        ips = tuple(new_ips)
+        for ip in ips:
+            test_ent = get_ipranged_by_ip(ip)
+            if test_ent['id'] == 0:
+                print('IP address: {} is not in a defined network'.format(ip))
+                new_ips.remove(ip)
+        if len(new_ips):
+            value = ','.join(new_ips)
+            d = props2dict(ent['properties'])
+            d[prop_key] = value
+            d['ttl'] = ttl
+            ent['properties'] = dict2props(d)
+        else:
+            print('None of the IP addresses in {} could be updated'.format(org_value))
+            return
+    elif rr_type == 'TXT' or rr_type == 'CNAME':
         d = props2dict(ent['properties'])
         d[prop_key] = value
         d['ttl'] = ttl

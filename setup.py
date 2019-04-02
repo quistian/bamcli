@@ -3,9 +3,9 @@ from setuptools import setup
 setup(
         name='BAM CLI Interface',
         version='0.0.1',
-        author='Russell Sutherland'
-        author_email='russell.sutherland@utoronto.ca'
-        description='A Command Line Interface using the BAM Python API to manage DNS data"
+        description='Python Command Line Interface to BAM',
+        author='Russell Sutherland',
+        author_email='russell.sutherland@utoronto.ca',
         py_modules=[
             'requests',
             'Click',

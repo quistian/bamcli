@@ -47,7 +47,11 @@ def cli(action, fqdn, rr_type, value, ttl, debug):
         elif rr_type == 'CNAME':
             pybam.delete_rr(fqdn, rr_type)
         elif value != 'defVAL':
-            pybam.delete_rr(fqdn, rr_type, value)    
+            if rr_type == 'A':
+                for val in value.split(','):
+                    pybam.delete_rr(fqdn, rr_type, val)    
+            else:
+                pybam.delete_rr(fqdn, rr_type, value)
         else:
             print('Not enough RR information given')
             print('Format: bamcli {} fqdn RR_type value'.format(action))
