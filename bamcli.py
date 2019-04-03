@@ -32,9 +32,13 @@ def cli(action, fqdn, rr_type, value, ttl, debug):
     if action == 'add':
         if rr_type == 'defRR' or value == 'defVAL':
             print('Not enough RR information given')
-            print('Format: bamcli {} fqdn RR_type value'.format(action))
+            print('Format: bamcli {} fqdn RR_type value [ttl]'.format(action))
+        elif rr_type == 'A':
+            ips = value.split(',')
+            for ip in ips:
+                pybam.add_rr(fqdn, rr_type, ip, ttl)
         else:
-            pybam.add_rr(fqdn, rr_type, value, ttl)    
+                pybam.add_rr(fqdn, rr_type, value, ttl)
     elif action == 'replace' or action == 'update':
         if rr_type == 'defRR' or value == 'defVAL':
             print('Not enough RR information given')
