@@ -1608,6 +1608,17 @@ def bam_error(err_str):
     print('BAM error:', err_str)
     sys.exit()
 
+#
+# takes a mx_host and and optional priority
+# and returns a list of mx_host, priority
+#
+
+def mx_parse(value):
+    sep = ':'
+    if sep in value:
+        return value.split(sep)
+    else:
+        return (value, '10')
 
 # Takes a property list as a dictionary e.g.
 # {'ttl': '86400', 'absoluteName': 'fwsm-tabu.bkup.utoronto.ca', 'addresses': '128.100.96.158', 'reverseRecord': 'true'}
@@ -1908,8 +1919,8 @@ def find_rr(fqdn, *argv):
                         rr_ents = [ent]
                         break
                 elif rr_type == 'MX':
-                    (priority, mxhost) = value.split(',')
-                    if d['priority'] == priority and mxhost == values:
+                    (mx_host, priority) = mx_parse(value)
+                    if d['priority'] == priority and mx_host == values:
                         found = True
                         rr_ents = [ent]
                         break
@@ -1984,7 +1995,7 @@ def bind_print(ent_ids):
 def object_find(fqdn, rr_type, value):
     id = 0
     if rr_type == 'MX':
-        (priority, value) = value.split(' ')
+        (value, priority) = mx_parse(value)
 
     obj_type = RRTypeMap[rr_type]['obj_type']
     prop_key = RRTypeMap[rr_type]['prop_key']
@@ -2189,8 +2200,6 @@ def delete_rr(fqdn, rr_type, *argv):
 
 """
 
-Old delete routine
-
 def delete_rr_old(fqdn, *argv):
     ll = len(argv)
     if ll:
@@ -2235,7 +2244,6 @@ def delete_rr_old(fqdn, *argv):
 
 """
 
-
 #
 # fqdn is at the zone level or is a new RR below a zone
 # new code using find_rr
@@ -2276,7 +2284,7 @@ def add_rr(fqdn, rr_type, value, ttl):
         print('added new CNAME record:')
         bind_print([obj_id])
     elif rr_type == 'MX':
-        (priority, mx_host) = value.split(',')
+        (mx_host, priority) = mx_parse(value)
         if is_zone(fqdn):
             fqdn = '.' + fqdn
         obj_id = add_MX_Record(fqdn, priority, mx_host, ttl)
@@ -2389,7 +2397,7 @@ def add_rr(fqdn, rr_type, value, ttl):
         return obj_id
 
     elif rr_type == 'MX':
-        (priority, mx_host) = value.split(',')
+        (mx_host, priority) = mx_parse(value)
         if not (is_host_record(mx_host) or is_external_host(mx_host)):
                 print('MX host:', mx_host, 'must be defined either as a Host Record or an External Host')
                 return 0
