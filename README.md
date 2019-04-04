@@ -4,13 +4,13 @@ bamcli is a CLI (Command Line Interface) to BAM (BlueCat Address Manager). It us
 
 ## Installation
 
-* Download the code from Github
+Download the source code from Github:
 
 <pre><code>
 $ git clone https://github.com/quistian/bamcli.git
 </code></pre>
 
-* Set up the Python3 virtual environment for bamcli to run in:
+Set up a Python3 virtual environment for bamcli to run in:
 
 <pre><code>
 $ cd bamcli
@@ -21,8 +21,7 @@ $ pip install click requests
 $ pip install --editable .
 </code></pre>
 
-
-Customize your Unix shell (this documentation assumes /bin/sh, /bin/bash or /bin/zsh) environment to set the BAM URL, Username and Password
+Customize your Unix shell (this documentation assumes /bin/sh, /bin/bash or /bin/zsh) environment to set the BAM URL, Username and Password.
 
 <pre><code>
 $ cat .example_bamrc
@@ -35,8 +34,7 @@ $ vi .bamrc
 $ . .bamrc
 </code></pre>
 
-The BAM CLI interface will not work with out these SHELL variables being set
-
+The BAM CLI interface will not work with out these SHELL variables being set which serve as your credentials to the BAM.
 
 ## Description
 
@@ -54,13 +52,45 @@ At present the CLI understands four types of DNS Resource Records:
 * TXT records for adding text based information
 * MX records for mail exchanger data
 
+The general bamcli syntax is as follows:
+
+<pre>
+<b>bamcli</b> <i>action</i> <i>fqdn</i> <i>RR_type</i> <i>value[,value,value]</i> [<i>ttl</i>]
+</pre>
+
+Where: <br>
+
+<i>action</i> is one of the above mentioned four editing operators:
+
+* add -> adds RRs to the DNS zone. For A records multiple values are permitted.
+* delete/remove -> deletes RRs from the DNS zone. Like A records, multiple values are permitted.
+* update -> updates the values of a given fqdn. All existing data is effectively deleted
+* view/list -> shows the current state of the DNS data
+
+* <i>fqdn</i> is the Fully Qualified Domain Name of the RR.
+
+* <i>RR_type</i> is one of: A, CNAME, TXT, MX
+ 
+* <i>value</i> is the data associated with the respective FQDN and RRtype.
+
+<pre>
+Note: For TXT records the value must be surrounded by single or double quotes.
+      For MX records the priority is optional and should be given after the value, separated by a comma.
+      The default priority is 10.
+      
+      E.g.
+      bamcli add txt.zip.bigcorp.ca TXT 'Sam I am!'
+      bamcli add mx.zip.bigcorp.ca MX mailer.zip.bigcorp.ca
+      bamcli add mx.zip.bigcorp.ca MX secondary.zip.bigcorp.ca:20
+</pre>
+
 ## Examples
 
 <h3> Adding Resource Records</h3>
   
 First we shall ADD some data to our zone: zip.bigcorp.ca to our network: 10.10.0.0/24
 
-<pre><code>
+<pre>
 $ bamcli add red.zip.bigcorp.ca  A 10.10.0.100
 $ bamcli add blue.zip.bigcorp.ca A 10.10.10.10
 $ bamcli add blue.zip.bigcorp.ca A 10.10.2.2
@@ -69,7 +99,7 @@ $ bamcli add smtp.zip.bigcorp.ca A 10.10.25.25
 $ bamcli add rouge.zip.bigcorp.ca CNAME red.zip.bigcorp.ca
 $ bamcli add note.zip.bigcorp.ca TXT "Superman and Batman"
 $ bamcli add zip.bigcorp.ca MX 10,smtp.zip.bigcorp.ca
-</code></pre>
+</pre>
 
 Records can also be added to the top level:
 
@@ -119,7 +149,28 @@ blue.zip.bigcorp.ca       IN   A    10.10.10.10
 blue.zip.bigcorp.ca       IN   A    10.10.2.2
 </code></pre>
 
-can be created/deleted/changed and viewed
-via this intereface.
+<h3> Deleting DNS data </h3>
 
-At the present time bulk operations are managed by creating a file of bamcli commands and reading the file into the shell
+Deleting DNS RRs are done in the same manner in which they were added. The general syntax is:
+
+<pre>
+$ bamcli delete fqdn RR_type value
+</pre>
+
+Here are some examples:
+
+<pre>
+$ bamcli delete zip.bigcorp.ca A 10.10.1.1
+$ bamcli delete blue.zip.bigcorp.ca A 10.10.10.10,10.10.2.2
+$ bamcli delete rouge.zip.bigcorp.ca CNAME
+
+Note: CNAME records can be deleted with or without the value as there can only be one record per fqdn.
+</pre>
+
+## Batch operations
+
+At the present time bulk operations are managed by creating a file of bamcli commands using file as input to the shell.
+
+<pre>
+cat cli-cmds | sh
+</pre>
