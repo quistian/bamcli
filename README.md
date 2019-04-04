@@ -114,6 +114,40 @@ Time to Live values can be assigned on a per RR basis (the default being 86400 s
 $ bamcli add tmp.zip.bigcorp.ca A 10.10.7.7 3600
 </code></pre>
 
+<h3> Updating DNS data </h3>
+
+The <i>update</i> action is similar in function to deleting all values associated with a FQDN of a given RRtype and then replacing them with the new ones given.
+
+E.g.
+
+<pre>
+$ bamcli update zip.bigcorp.ca. A 10.10.10.1,10.10.10.2
+Updated RR as follows:
+zip.bigcorp.ca  IN  A  10.10.10.1
+zip.bigcorp.ca  IN  A  10.10.10.2
+</pre>
+
+Will remove any and all A records associated with zip.bigcorp.ca and add two new one. The result will be:
+
+<pre>
+$ bamcli view zip.bigcorp.ca A
+zip.bigcorp.ca  IN  A  10.10.10.1
+zip.bigcorp.ca  IN  A  10.10.10.2
+
+The update action can be used to change the Time To Live (TTL) value for a given RR.
+
+E.g.
+
+<pre>
+$ bamcli view zip.bigcorp.ca A
+zip.bigcorp.ca  IN  A  10.10.10.1
+
+$ bamcli update zip.bigcorp.ca A 10.10.10.1 3600
+Updated RR as follows:
+zip.bigcorp.ca  IN  3600 A  10.10.10.1
+$ bamcli view zip.bigcorp.ca A
+zip.bigcorp.ca  IN  3600 A  10.10.10.1
+
 <h3> Viewing DNS data </h3>
 
 Now we can VIEW the data we have added. To see the entire zone use the top level domain name followed by a dot. (The output is in BIND format).
