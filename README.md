@@ -54,9 +54,9 @@ At present the CLI understands four types of DNS Resource Records:
 
 The general bamcli syntax is as follows:
 
-<pre>
+<pre><code>
 <b>bamcli</b> <i>action</i> <i>fqdn</i> <i>RR_type</i> <i>value[,value,value]</i> [<i>ttl</i>]
-</pre>
+</code></pre>
 
 Where: <br>
 
@@ -73,7 +73,7 @@ Where: <br>
  
 * <i>value</i> is the data associated with the respective FQDN and RRtype.
 
-<pre>
+<pre><code>
 Note: For TXT records the value must be surrounded by single or double quotes.
       For MX records the priority is optional and should be given after the value, separated by a comma.
       The default priority is 10.
@@ -82,7 +82,7 @@ Note: For TXT records the value must be surrounded by single or double quotes.
       bamcli add txt.zip.bigcorp.ca TXT 'Sam I am!'
       bamcli add mx.zip.bigcorp.ca MX mailer.zip.bigcorp.ca
       bamcli add mx.zip.bigcorp.ca MX secondary.zip.bigcorp.ca:20
-</pre>
+</code></pre>
 
 ## Examples
 
@@ -90,7 +90,7 @@ Note: For TXT records the value must be surrounded by single or double quotes.
   
 First we shall ADD some data to our zone: zip.bigcorp.ca to our network: 10.10.0.0/24
 
-<pre>
+<pre><code>
 $ bamcli add red.zip.bigcorp.ca  A 10.10.0.100
 $ bamcli add blue.zip.bigcorp.ca A 10.10.10.10
 $ bamcli add blue.zip.bigcorp.ca A 10.10.2.2
@@ -99,7 +99,7 @@ $ bamcli add smtp.zip.bigcorp.ca A 10.10.25.25
 $ bamcli add rouge.zip.bigcorp.ca CNAME red.zip.bigcorp.ca
 $ bamcli add note.zip.bigcorp.ca TXT "Superman and Batman"
 $ bamcli add zip.bigcorp.ca MX 10,smtp.zip.bigcorp.ca
-</pre>
+</code></pre>
 
 Records can also be added to the top level:
 
@@ -120,25 +120,26 @@ The <i>update</i> action is similar in function to deleting all values associate
 
 E.g.
 
-<pre>
+<pre><code>
 $ bamcli update zip.bigcorp.ca. A 10.10.10.1,10.10.10.2
 Updated RR as follows:
 zip.bigcorp.ca  IN  A  10.10.10.1
 zip.bigcorp.ca  IN  A  10.10.10.2
-</pre>
+</code></pre>
 
 Will remove any and all A records associated with zip.bigcorp.ca and add two new one. The result will be:
 
-<pre>
+<pre><code>
 $ bamcli view zip.bigcorp.ca A
 zip.bigcorp.ca  IN  A  10.10.10.1
 zip.bigcorp.ca  IN  A  10.10.10.2
+</code></pre>
 
 The update action can be used to change the Time To Live (TTL) value for a given RR.
 
 E.g.
 
-<pre>
+<pre><code>
 $ bamcli view zip.bigcorp.ca A
 zip.bigcorp.ca  IN  A  10.10.10.1
 
@@ -147,14 +148,16 @@ Updated RR as follows:
 zip.bigcorp.ca  IN  3600 A  10.10.10.1
 $ bamcli view zip.bigcorp.ca A
 zip.bigcorp.ca  IN  3600 A  10.10.10.1
+</code></pre>
 
 <h3> Viewing DNS data </h3>
 
 Now we can VIEW the data we have added. To see the entire zone use the top level domain name followed by a dot. (The output is in BIND format).
 
-* bamcli view zip.bigcorp.ca.
+
 
 <pre><code>
+$ bamcli view zip.bigcorp.ca<b>.</b>
 zip.bigcorp.ca       IN       A      10.10.1.1
 zip.bigcorp.ca       IN       MX     10 smtp.zip.bigcorp.ca
 blue.zip.bigcorp.ca  IN       A      10.10.10.10
@@ -167,18 +170,18 @@ note.zip.bigcorp.ca  IN       TXT    "Superman and Batman"
 
 To see only the data at the top of the zone drop the trailing dot:
 
-* bamcli view zip.bigcorp.ca
-
 <pre><code>
+$ bamcli view zip.bigcorp.ca
 zip.bigcorp.ca       IN   A      10.10.1.1
 zip.bigcorp.ca       IN   MX     10 smtp.zip.bigcorp.ca
 </code></pre>
 
 To see all data of the same RR type the value can be dropped from the argument list:
 
-* bamcli view blue.zip.bigcorp.ca A
+
 
 <pre><code>
+$ bamcli view blue.zip.bigcorp.ca A
 blue.zip.bigcorp.ca       IN   A    10.10.10.10
 blue.zip.bigcorp.ca       IN   A    10.10.2.2
 </code></pre>
@@ -187,24 +190,24 @@ blue.zip.bigcorp.ca       IN   A    10.10.2.2
 
 Deleting DNS RRs are done in the same manner in which they were added. The general syntax is:
 
-<pre>
+<pre><code>
 $ bamcli delete fqdn RR_type value
-</pre>
+</code></pre>
 
 Here are some examples:
 
-<pre>
+<pre><code>
 $ bamcli delete zip.bigcorp.ca A 10.10.1.1
 $ bamcli delete blue.zip.bigcorp.ca A 10.10.10.10,10.10.2.2
 $ bamcli delete rouge.zip.bigcorp.ca CNAME
 
 Note: CNAME records can be deleted with or without the value as there can only be one record per fqdn.
-</pre>
+</code></pre>
 
 ## Batch operations
 
 At the present time bulk operations are managed by creating a file of bamcli commands using file as input to the shell.
 
-<pre>
+<pre><code>
 cat cli-cmds | sh
-</pre>
+</code></pre>
