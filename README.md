@@ -2,6 +2,35 @@
 
 bamcli is a CLI (Command Line Interface) to BAM (BlueCat Address Manager). It uses the BAM Python API.
 
+## Installation
+
+* Download the code from Github
+
+$ git clone https://github.com/quistian/bamcli.git
+
+* Set up the Python3 virtual environment for bamcli to run in:
+
+$ cd bamcli
+$ python3 -m venv `pwd`/venv
+$ . venv/bin/activate
+$ pip install --upgrade pip
+$ pip install click requests
+$ pip install --editable .
+
+Customize your Unix shell (this documentation assumes /bin/sh, /bin/bash or /bin/zsh) environment to set the BAM URL, Username and Password
+
+$ cat .example_bamrc
+export BAM_USER=fred
+export BAM_PW='Flintstones_R_4ever!'
+export BAM_API_URL='https://bam.bigcorp.ca/Services/REST/v1/'
+
+$ mv .example_bamrc .bamrc
+$ vi .bamrc
+$ . .bamrc
+
+The BAM CLI interface will not work with out these SHELL 
+
+
 ## Description
 
 The CLI operates on one's DNS data Resource Records (RR) using four commands or actions:
