@@ -16,25 +16,33 @@ Set up a Python3 virtual environment for bamcli to run in:
 $ cd bamcli
 $ python3 -m venv `pwd`/venv
 $ . venv/bin/activate
-$ pip install --upgrade pip
-$ pip install click requests
-$ pip install --editable .
+(venv) $ pip install --upgrade pip
+(venv) $ pip install click requests
+(venv) $ pip install --editable .
 </code></pre>
 
 Customize your Unix shell (this documentation assumes /bin/sh, /bin/bash or /bin/zsh) environment to set the BAM URL, Username and Password.
 
 <pre><code>
-$ cat .example_bamrc
+(venv) $ cat .example_bamrc
 export BAM_USER=fred
 export BAM_PW='Flintstones_R_4ever!'
 export BAM_API_URL='https://bam.bigcorp.ca/Services/REST/v1/'
 
-$ mv .example_bamrc .bamrc
-$ vi .bamrc
-$ . .bamrc
+(venv) $ mv .example_bamrc .bamrc
+(venv) $ vi .bamrc
+(venv) $ . .bamrc
 </code></pre>
 
 The BAM CLI interface will not work with out these SHELL variables being set which serve as your credentials to the BAM.
+
+When finished with the bamcli session, you can exit the Python virtual environment as follows:
+
+<pre><code>
+(venv) $ deactivate
+$
+</code></pre>
+
 
 ## Description
 
@@ -91,27 +99,27 @@ Note: For TXT records the value must be surrounded by single or double quotes.
 First we shall ADD some data to our zone: zip.bigcorp.ca to our network: 10.10.0.0/24
 
 <pre><code>
-$ bamcli add red.zip.bigcorp.ca  A 10.10.0.100
-$ bamcli add blue.zip.bigcorp.ca A 10.10.10.10
-$ bamcli add blue.zip.bigcorp.ca A 10.10.2.2
-$ bamcli add zip.bigcorp.ca A 10.10.11
-$ bamcli add smtp.zip.bigcorp.ca A 10.10.25.25
-$ bamcli add rouge.zip.bigcorp.ca CNAME red.zip.bigcorp.ca
-$ bamcli add note.zip.bigcorp.ca TXT "Superman and Batman"
-$ bamcli add zip.bigcorp.ca MX 10,smtp.zip.bigcorp.ca
+(venv) $ bamcli add red.zip.bigcorp.ca  A 10.10.0.100
+(venv) $ bamcli add blue.zip.bigcorp.ca A 10.10.10.10
+(venv) $ bamcli add blue.zip.bigcorp.ca A 10.10.2.2
+(venv) $ bamcli add zip.bigcorp.ca A 10.10.11
+(venv) $ bamcli add smtp.zip.bigcorp.ca A 10.10.25.25
+(venv) $ bamcli add rouge.zip.bigcorp.ca CNAME red.zip.bigcorp.ca
+(venv) $ bamcli add note.zip.bigcorp.ca TXT "Superman and Batman"
+(venv) $ bamcli add zip.bigcorp.ca MX 10,smtp.zip.bigcorp.ca
 </code></pre>
 
 Records can also be added to the top level:
 
 <pre><code>
-$ bamcli add zip.bigcorp.ca MX 10,smtp.zip.bigcorp.ca
-$ bamcli add zip.bigcorp.ca A 10.10.1.1
+(venv) $ bamcli add zip.bigcorp.ca MX 10,smtp.zip.bigcorp.ca
+(venv) $ bamcli add zip.bigcorp.ca A 10.10.1.1
 </code></pre>
 
 Time to Live values can be assigned on a per RR basis (the default being 86400 seconds/1 day) by adding a numeric value as the last argument:
 
 <pre><code>
-$ bamcli add tmp.zip.bigcorp.ca A 10.10.7.7 3600
+(venv) $ bamcli add tmp.zip.bigcorp.ca A 10.10.7.7 3600
 </code></pre>
 
 <h3> Updating DNS data </h3>
@@ -121,7 +129,7 @@ The <i>update</i> action is similar in function to deleting all values associate
 E.g.
 
 <pre><code>
-$ bamcli update zip.bigcorp.ca. A 10.10.10.1,10.10.10.2
+(venv) $ bamcli update zip.bigcorp.ca. A 10.10.10.1,10.10.10.2
 Updated RR as follows:
 zip.bigcorp.ca  IN  A  10.10.10.1
 zip.bigcorp.ca  IN  A  10.10.10.2
@@ -130,7 +138,7 @@ zip.bigcorp.ca  IN  A  10.10.10.2
 Will remove any and all A records associated with zip.bigcorp.ca and add two new one. The result will be:
 
 <pre><code>
-$ bamcli view zip.bigcorp.ca A
+(venv) $ bamcli view zip.bigcorp.ca A
 zip.bigcorp.ca  IN  A  10.10.10.1
 zip.bigcorp.ca  IN  A  10.10.10.2
 </code></pre>
@@ -140,13 +148,13 @@ The update action can be used to change the Time To Live (TTL) value for a given
 E.g.
 
 <pre><code>
-$ bamcli view zip.bigcorp.ca A
+(venv) $ bamcli view zip.bigcorp.ca A
 zip.bigcorp.ca  IN  A  10.10.10.1
 
-$ bamcli update zip.bigcorp.ca A 10.10.10.1 3600
+(venv) $ bamcli update zip.bigcorp.ca A 10.10.10.1 3600
 Updated RR as follows:
 zip.bigcorp.ca  IN  3600 A  10.10.10.1
-$ bamcli view zip.bigcorp.ca A
+(venv) $ bamcli view zip.bigcorp.ca A
 zip.bigcorp.ca  IN  3600 A  10.10.10.1
 </code></pre>
 
@@ -157,7 +165,7 @@ Now we can VIEW the data we have added. To see the entire zone use the top level
 
 
 <pre><code>
-$ bamcli view zip.bigcorp.ca<b>.</b>
+(venv) $ bamcli view zip.bigcorp.ca<b>.</b>
 zip.bigcorp.ca       IN       A      10.10.1.1
 zip.bigcorp.ca       IN       MX     10 smtp.zip.bigcorp.ca
 blue.zip.bigcorp.ca  IN       A      10.10.10.10
@@ -171,7 +179,7 @@ note.zip.bigcorp.ca  IN       TXT    "Superman and Batman"
 To see only the data at the top of the zone drop the trailing dot:
 
 <pre><code>
-$ bamcli view zip.bigcorp.ca
+(venv) $ bamcli view zip.bigcorp.ca
 zip.bigcorp.ca       IN   A      10.10.1.1
 zip.bigcorp.ca       IN   MX     10 smtp.zip.bigcorp.ca
 </code></pre>
@@ -181,7 +189,7 @@ To see all data of the same RR type the value can be dropped from the argument l
 
 
 <pre><code>
-$ bamcli view blue.zip.bigcorp.ca A
+(venv) $ bamcli view blue.zip.bigcorp.ca A
 blue.zip.bigcorp.ca       IN   A    10.10.10.10
 blue.zip.bigcorp.ca       IN   A    10.10.2.2
 </code></pre>
@@ -191,15 +199,15 @@ blue.zip.bigcorp.ca       IN   A    10.10.2.2
 Deleting DNS RRs are done in the same manner in which they were added. The general syntax is:
 
 <pre><code>
-$ bamcli delete fqdn RR_type value
+(venv) $ bamcli delete fqdn RR_type value
 </code></pre>
 
 Here are some examples:
 
 <pre><code>
-$ bamcli delete zip.bigcorp.ca A 10.10.1.1
-$ bamcli delete blue.zip.bigcorp.ca A 10.10.10.10,10.10.2.2
-$ bamcli delete rouge.zip.bigcorp.ca CNAME
+(venv) $ bamcli delete zip.bigcorp.ca A 10.10.1.1
+(venv) $ bamcli delete blue.zip.bigcorp.ca A 10.10.10.10,10.10.2.2
+(venv) $ bamcli delete rouge.zip.bigcorp.ca CNAME
 
 Note: CNAME records can be deleted with or without the value as there can only be one record per fqdn.
 </code></pre>
@@ -209,5 +217,5 @@ Note: CNAME records can be deleted with or without the value as there can only b
 At the present time bulk operations are managed by creating a file of bamcli commands using file as input to the shell.
 
 <pre><code>
-cat cli-cmds | sh
+(venv) $cat cli-cmds | sh
 </code></pre>
