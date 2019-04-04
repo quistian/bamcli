@@ -6,19 +6,25 @@ bamcli is a CLI (Command Line Interface) to BAM (BlueCat Address Manager). It us
 
 * Download the code from Github
 
+<pre><code>
 $ git clone https://github.com/quistian/bamcli.git
+</code></pre>
 
 * Set up the Python3 virtual environment for bamcli to run in:
 
+<pre><code>
 $ cd bamcli
 $ python3 -m venv `pwd`/venv
 $ . venv/bin/activate
 $ pip install --upgrade pip
 $ pip install click requests
 $ pip install --editable .
+</code></pre>
+
 
 Customize your Unix shell (this documentation assumes /bin/sh, /bin/bash or /bin/zsh) environment to set the BAM URL, Username and Password
 
+<pre><code>
 $ cat .example_bamrc
 export BAM_USER=fred
 export BAM_PW='Flintstones_R_4ever!'
@@ -27,8 +33,9 @@ export BAM_API_URL='https://bam.bigcorp.ca/Services/REST/v1/'
 $ mv .example_bamrc .bamrc
 $ vi .bamrc
 $ . .bamrc
+</code></pre>
 
-The BAM CLI interface will not work with out these SHELL 
+The BAM CLI interface will not work with out these SHELL variables being set
 
 
 ## Description
