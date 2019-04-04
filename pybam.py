@@ -45,18 +45,6 @@ import os
 import sys
 import json
 import requests
-import getpass
-
-from pprint import pprint
-
-uname = 'api-test-user'
-pw = 't1e2s3t4'
-creds_ro = {'username': uname, 'password': pw}
-
-uname = 'api-test-user2'
-pw = 't5e6s7t8'
-creds_rw = {'username': uname, 'password': pw}
-
 
 '''
 
@@ -70,18 +58,11 @@ Global Variables convention:
 Debug = True
 Debug = False
 
-Creds = creds_rw
-
 BaseURL = ''
 
-RootId = 0
 ConfigId = 0
 ViewId = 0
 
-ConfigName = 'Production'
-ConfigName = 'Test'
-
-ViewName = 'Public'
 
 LegalTLDs = ('ca', 'com', 'edu', 'org')
 
@@ -1623,6 +1604,11 @@ Higher Level Functions
 
 '''
 
+def bam_error(err_str):
+    print('BAM error:', err_str)
+    sys.exit()
+
+
 # Takes a property list as a dictionary e.g.
 # {'ttl': '86400', 'absoluteName': 'fwsm-tabu.bkup.utoronto.ca', 'addresses': '128.100.96.158', 'reverseRecord': 'true'}
 # and returns it as a string equivalent:
@@ -1650,48 +1636,70 @@ def props2dict(str):
 
 
 def get_token():
-    URL = BaseURL + 'login'
+    global BaseURL
 
-    env_name = os.getenv('BAM_USER')
-    env_pw = os.getenv('BAM_PW')
-    if type(env_name) is str and type(env_pw) is str:
-        if Debug:
-            print('setting Creds from SHELL variables')
-        Creds = {'username': env_name, 'password': env_pw}
-    elif Debug:
-        Creds = creds_rw
-    else:
-        uname = input('Username: ')
-        pw = getpass.getpass()
-        Creds = {'username': uname, 'password': pw}
 
-    req = requests.get(URL, params=Creds)
-    return req.json().split()[3]
 
+'''
+    text: "Session Token-> BAMAuthToken: 7NfY4MTU1NDM5MDU1MzkzMzppc2VhLWFwaQ== <- for User : test-api"
+    json: Session Token-> BAMAuthToken: 7NfY4MTU1NDM5MDU1MzkzMzppc2VhLWFwaQ== <- for User : test-api
+'''
 
 def bam_init(debug):
-    global AuthHeader, BaseURL, ConfigId, ViewId, Debug
+    global Debug, AuthHeader, ConfigId, ViewId, BaseURL
+
+#   ConfigName = 'Production'
+    ConfigName = 'Test'
+    ViewName = 'Public'
+    RootId = 0
+
+    BaseURL = os.getenv('BAM_API_URL')
+    if BaseURL is None:
+        bam_error('The BAM_API_URL shell variable must be set')
+    env_name = os.getenv('BAM_USER')
+    env_pw = os.getenv('BAM_PW')
+    if env_name is None or env_pw is None:
+        bam_error('The BAM_USER and BAM_PW shell variables must be set')
 
     Debug = debug
-    BaseURL = os.getenv('BAM_API_URL')
-    tok = get_token()
+    Creds = {'username': env_name, 'password': env_pw}
+
+    URL = BaseURL + 'login'
+    req = requests.get(URL, params=Creds)
+    if Debug:
+        print('status code: {}'.format(req.status_code))
+        print('headers: {}'.format(req.headers))
+        print('text: {}'.format(req.text))
+        print('json: {}'.format(req.json()))
+
+    session_token = req.text.split()[3]
+
     AuthHeader = {
-      'Authorization': 'BAMAuthToken: ' + tok,
+      'Authorization': 'BAMAuthToken: ' + session_token,
       'Content-Type': 'application/json'
     }
-    if Debug:
-        print('Authorization Header:', AuthHeader)
-        print()
 
-    val = get_system_info()
     if Debug:
+        print('Authorization Header: {}'.format(AuthHeader))
+
+    config_ent = get_entity_by_name(RootId, ConfigName, 'Configuration')
+    if Debug:
+        print('Config Entity: {}'.format(config_ent))
+    ConfigId = config_ent['id']
+    if ConfigId > 0:
+        view_ent = get_entity_by_name(ConfigId, ViewName, 'View')
+        if Debug:
+            print('View Entity: {}'.format(view_ent))
+        ViewId = view_ent['id']
+    else:
+        bam_error('Error: The parent (Configuration) Id must be set before setting the View Id')
+
+    if Debug:
+        val = get_system_info()
         vals = val.split('|')
         for val in vals:
             print(val)
         print()
-
-    ConfigId = get_config_id(ConfigName)
-    ViewId = get_view_id(ViewName)
 
 
 def bam_logout():
@@ -1699,10 +1707,6 @@ def bam_logout():
     req = requests.get(URL, headers=AuthHeader)
     sys.exit()
 
-
-def bam_error(err_str):
-    print('BAM error:', err_str)
-    sys.exit()
 
 # Deletes all data and RRs in the Zone tree including other Zones
 
@@ -1713,28 +1717,6 @@ def delete_zone(fqdn):
         return val
 
 
-#
-# assumes the two global variable have been set: ConfigName, ViewName
-#
-
-
-def get_config_id(config_name):
-    config_info = get_entity_by_name(RootId, config_name, 'Configuration')
-    if Debug:
-    	pprint(config_info)
-    return config_info['id']
-
-
-def get_view_id(view_name):
-    if ConfigId > 0:
-        view_info = get_entity_by_name(ConfigId, view_name, 'View')
-        if Debug:
-            pprint(view_info)
-        return view_info['id']
-    else:
-        bam_error('Error: The parent (Configuration) Id must be set before setting the View Id')
-
-        
 #
 # given andy.bozo.cathy.dan.ca it returns bozo.cathy.dan.ca
 #
