@@ -49,15 +49,6 @@ import getpass
 
 from pprint import pprint
 
-uname = 'api-test-user'
-pw = 't1e2s3t4'
-creds_ro = {'username': uname, 'password': pw}
-
-uname = 'api-test-user2'
-pw = 't5e6s7t8'
-creds_rw = {'username': uname, 'password': pw}
-
-
 '''
 
 Global Variables convention:
