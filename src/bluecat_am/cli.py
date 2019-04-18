@@ -1,5 +1,6 @@
+from bluecat_am import api
+
 import click
-import pybam
 
 @click.command()
 
@@ -16,14 +17,14 @@ import pybam
 
 # Main programme
 
-def cli(action, fqdn, rr_type, value, ttl, debug):
+def run(action, fqdn, rr_type, value, ttl, debug):
     '''
     Command line interface to BAM DNS System \n
     Usage: action fqdn rr_type ttl value \n
     E.g.  $ add bozo.uoft.ca A 3600 10.10.10.1 [TTL]
     '''
 
-    pybam.bam_init(debug)
+    api.bam_init(debug)
 
     if debug:
         click.echo('action: {}'.format(action))
@@ -36,45 +37,45 @@ def cli(action, fqdn, rr_type, value, ttl, debug):
         elif rr_type == 'A':
             ips = value.split(',')
             for ip in ips:
-                pybam.add_rr(fqdn, rr_type, ip, ttl)
+                api.add_rr(fqdn, rr_type, ip, ttl)
         else:
-                pybam.add_rr(fqdn, rr_type, value, ttl)
+                api.add_rr(fqdn, rr_type, value, ttl)
     elif action == 'replace' or action == 'update':
         if rr_type == 'defRR' or value == 'defVAL':
             print('Not enough RR information given')
             print('Format: bamcli {} fqdn RR_type value'.format(action))
         else:
-            pybam.update_rr(fqdn, rr_type, value, ttl)
+            api.update_rr(fqdn, rr_type, value, ttl)
     elif action == 'delete' or action == 'remove':
         if rr_type == 'defRR':
             print('No RR type information given')
         elif rr_type == 'CNAME':
-            pybam.delete_rr(fqdn, rr_type)
+            api.delete_rr(fqdn, rr_type)
         elif value != 'defVAL':
             if rr_type == 'A':
                 for val in value.split(','):
-                    pybam.delete_rr(fqdn, rr_type, val)    
+                    api.delete_rr(fqdn, rr_type, val)    
             else:
-                pybam.delete_rr(fqdn, rr_type, value)
+                api.delete_rr(fqdn, rr_type, value)
         else:
             print('Not enough RR information given')
             print('Format: bamcli {} fqdn RR_type value'.format(action))
     elif action == 'view' or action == 'list':
         if rr_type == 'defRR':
-            pybam.view_rr(fqdn)
+            api.view_rr(fqdn)
         elif value == 'defVAL':
-            pybam.view_rr(fqdn, rr_type)
+            api.view_rr(fqdn, rr_type)
         else:
-            pybam.view_rr(fqdn, rr_type, value)
+            api.view_rr(fqdn, rr_type, value)
     elif action == 'find':
         if rr_type == 'defRR':
-            ids = pybam.find_rr(fqdn)
+            ids = api.find_rr(fqdn)
         elif value == 'defVAL':
-            ids = pybam.find_rr(fqdn, rr_type)
+            ids = api.find_rr(fqdn, rr_type)
         else:
-            ids = pybam.find_rr(fqdn, rr_type, value)
+            ids = api.find_rr(fqdn, rr_type, value)
         print(ids)
 
 
 if __name__ == '__main__':
-    cli()
+    run()
