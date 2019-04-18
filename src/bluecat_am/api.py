@@ -55,7 +55,6 @@ Global Variables convention:
 
 '''
 
-Debug = True
 Debug = False
 
 BaseURL = ''
@@ -249,6 +248,7 @@ Parameter Description:
 Returns a list of branch items given the root one level up
 
 '''
+
 
 def get_entities(parentid, type, start=0, count=10):
     URL = BaseURL + 'getEntities'
