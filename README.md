@@ -18,7 +18,6 @@ $ cd bamcli
 $ python3 -m venv `pwd`/venv
 $ . venv/bin/activate
 (venv) $ pip install --upgrade pip
-(venv) $ pip install click requests
 (venv) $ pip install --editable .
 ```
 
