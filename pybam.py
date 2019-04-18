@@ -1858,7 +1858,11 @@ def view_info_by_name(fqdn, *argv):
 
 
 def find_rr(fqdn, *argv):
+    """ Given a fqdn and an RR type and optionally a value
+        return a list of entity IDs which match the given input
+    """
     obj_types = RRObjectTypes
+    value = obj_rr_key = None
 
     arglen = len(argv)
     if arglen > 0:
@@ -1874,6 +1878,9 @@ def find_rr(fqdn, *argv):
     else:
         trailing_dot = False
 
+    if Debug:
+        print('find_rr: rr_type, value, obj_rr_key')
+        print('     {} {} {}'.format(rr_type, value, obj_rr_key))
     names = fqdn.split('.')
     tld = names.pop()
     if tld not in LegalTLDs:
@@ -2170,13 +2177,15 @@ def delete_rr(fqdn, rr_type, *argv):
     else:
         value = '*'
     if Debug:
-        print('Input data: {} {} {} {}'.format(fqdn, rr_type, value))
+        print('Input data: {} {} {}'.format(fqdn, rr_type, value))
 
 # there can only be one CNAME record for a FQDN so the value does not matter
     if rr_type == 'CNAME':
         obj_id = find_rr(fqdn, rr_type)
     else:
         obj_id = find_rr(fqdn, rr_type, value)
+    if Debug:
+        print('find_rr: obj_id: {}'.format(obj_id))
     if obj_id:
         print('This RR exists and will be deleted')
         bind_print(obj_id)
