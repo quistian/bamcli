@@ -41,101 +41,11 @@ User Group Webinar - Making APIs Work for You - Episode 1
 
 '''
 
-import os
 import sys
 import json
 import requests
 
-'''
-
-Global Variables convention:
-    * start with UpperCase
-    * have no _ character
-    * may have mid UpperCase words
-
-'''
-
-Debug = False
-
-BaseURL = ''
-
-ConfigId = 0
-ViewId = 0
-
-
-LegalTLDs = ('ca', 'com', 'edu', 'org')
-
-AuthHeader = {}
-
-ObjectTypes = (
-        'Entity',
-        'Configuration',
-        'View',
-        'InternalRootZone',
-        'ExternalHostRecord'
-        'Zone',
-        'HostRecord',
-        'AliasRecord',
-        'MXRecord',
-        'TXTRecord',
-        'SRVRecord',
-        'GenericRecord',
-        'HINFORecord',
-        'NAPTRRecord',
-        'StartOfAuthority',
-)
-
-RRObjectTypes = ObjectTypes[5:]
-
-RRTypeMap = {
-        'MX': {'obj_type': 'MXRecord', 'prop_key': 'linkedRecordName'},
-        'A': {'obj_type': 'HostRecord', 'prop_key': 'addresses'},
-        'a': {'obj_type': 'GenericRecord', 'prop_key': 'rdata'},
-        'PTR': {'obj_type': 'GenericRecord', 'prop_key': 'rdata'},
-        'CNAME': {'obj_type': 'AliasRecord', 'prop_key': 'linkedRecordName'},
-        'TXT': {'obj_type': 'TXTRecord', 'prop_key': 'txt'},
-}
-
-BAM2Bind = {
-        'HostRecord': 'A',
-        'MXRecord': 'MX',
-        'AliasRecord': 'CNAME',
-        'TXTRecord': 'TXT',
-}
-
-IPv4Objects = (
-        'IP4Block',
-        'IP4Network',
-        'IP4Adress',
-        'IP4DHCPRange',
-        'IP4NetworkTemplate',
-)
-
-Categories = {
-    'all': 'ALL',
-    'admin': 'ADMIN',
-    'Configuration': 'CONFIGURATION',
-    'deploymentOptions': 'DEPLOYMENT_OPTIONS',
-    'deploymentRoles': 'DEPLOYMENT_ROLES',
-    'deploymentSchedulers': 'DEPLOYMENT_SCHEDULERS',
-    'dhcpClassObjects': 'DHCPCLASSES_OBJECTS',
-    'dhcpNACPolicies': 'DHCPNACPOLICY_OBJECTS',
-    'IP4Objects': 'IP4_OBJECTS',
-    'IP6Objects': 'IP6_OBJECTS',
-    'MACPoolObjects': 'MACPOOL_OBJECTS',
-    'resourceRecords': 'RESOURCE_RECORD',
-    'servers': 'SERVERS',
-    'tags': 'TAGS',
-    'tasks': 'TASKS',
-    'TFTPObjects': 'TFTP_OBJECTS',
-    'vendorProfiles ': 'VENDOR_PROFILES',
-    'viewZones ': 'VIEWS_ZONES',
-    'TSIGKeys ': 'TSIG_KEYS',
-    'GSS': 'GSS',
-    'DHCPZones': 'DHCP_ZONES',
-    'ServerGroup': 'SERVERGROUP',
-}
-
+from bluecat_am import config
 
 '''
 
@@ -177,9 +87,9 @@ Parameter Description
 
 
 def get_entity_by_name(id, name, type):
-    URL = BaseURL + 'getEntityByName'
+    URL = config.BaseURL + 'getEntityByName'
     params = {'parentId': id, 'name': name, 'type': type}
-    req = requests.get(URL, headers=AuthHeader, params=params)
+    req = requests.get(URL, headers=config.AuthHeader, params=params)
     return req.json()
     
 
@@ -208,9 +118,9 @@ Returns E.g.
 
 
 def get_entity_by_id(entityid):
-    URL = BaseURL + 'getEntityById'
+    URL = config.BaseURL + 'getEntityById'
     params = {'id': str(entityid)}
-    req = requests.get(URL, headers=AuthHeader, params=params)
+    req = requests.get(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 
@@ -251,9 +161,9 @@ Returns a list of branch items given the root one level up
 
 
 def get_entities(parentid, type, start=0, count=10):
-    URL = BaseURL + 'getEntities'
+    URL = config.BaseURL + 'getEntities'
     params = {'parentId': parentid, 'type': type, 'start': start, 'count': count}
-    req = requests.get(URL, headers=AuthHeader, params=params)
+    req = requests.get(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 
@@ -280,9 +190,9 @@ E.g. parent object:
 
 
 def get_parent(childid):
-    URL = BaseURL + 'getParent'
+    URL = config.BaseURL + 'getParent'
     params = {'entityId': str(childid)}
-    req = requests.get(URL, headers=AuthHeader, params=params)
+    req = requests.get(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 
@@ -422,7 +332,7 @@ The return is a list as follows
 '''
 
 def custom_search(filters, type, start=0, count=10):
-    URL = BaseURL + 'customSearch'
+    URL = config.BaseURL + 'customSearch'
     params = {
             'filters': filters,
             'type': type,
@@ -430,7 +340,7 @@ def custom_search(filters, type, start=0, count=10):
             'start': start,
             'count': count,
     }
-    req = requests.get(URL, headers=AuthHeader, params=params)
+    req = requests.get(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 
@@ -464,7 +374,7 @@ Parameter Description:
 '''
 
 def search_by_category(key, category, start=0, count=10):
-    URL = BaseURL + 'searchByCategory'
+    URL = config.BaseURL + 'searchByCategory'
 
     params = {
         'keyword': key,
@@ -473,7 +383,7 @@ def search_by_category(key, category, start=0, count=10):
         'count': count
     }
 
-    req = requests.get(URL, headers=AuthHeader, params=params)
+    req = requests.get(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 
@@ -507,14 +417,14 @@ count: Maximum values to return. Default is 10
 
 
 def search_by_object_types(key, types, start=0, count=10):
-    URL = BaseURL + 'searchByObjectTypes'
+    URL = config.BaseURL + 'searchByObjectTypes'
     params = {
         'keyword': key,
         'types': types,
         'start': start,
         'count': count
     }
-    req = requests.get(URL, headers=AuthHeader, params=params)
+    req = requests.get(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 
@@ -544,7 +454,7 @@ Parameter Description
 
 
 def get_entities_by_name(parentid, name, obj_type, start=0, count=10):
-    URL = BaseURL + 'getEntitiesByName'
+    URL = config.BaseURL + 'getEntitiesByName'
     params = {
         'parentId': parentid,
         'name': name,
@@ -552,7 +462,7 @@ def get_entities_by_name(parentid, name, obj_type, start=0, count=10):
         'start': start,
         'count': count,
     }
-    req = requests.get(URL, headers=AuthHeader, params=params)
+    req = requests.get(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 '''
@@ -590,7 +500,7 @@ Parameters:
 '''
 
 def get_entities_by_name_using_options(parentid, name, typ, options='false', start=0, count=10):
-    URL = BaseURL + 'getEntitiesByNameUsingOptions'
+    URL = config.BaseURL + 'getEntitiesByNameUsingOptions'
     params = {
         'parentId': parentid,
         'name': name,
@@ -599,7 +509,7 @@ def get_entities_by_name_using_options(parentid, name, typ, options='false', sta
         'count': count,
         'options': options,
     }
-    req = requests.get(URL, headers=AuthHeader, params=params)
+    req = requests.get(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 '''
@@ -626,12 +536,12 @@ Parameter Description
 '''
 
 def get_MAC_Address(confid, macaddr):
-    URL = BaseURL + 'getMACAddress'
+    URL = config.BaseURL + 'getMACAddress'
     params = {
         'configurationId': confid,
         'macAddress': macaddr,
     }
-    req = requests.get(URL, headers=AuthHeader, params=params)
+    req = requests.get(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 
@@ -659,8 +569,8 @@ entity: The actual API entity passed as an entire object that has its mutable
 '''
 
 def update(entity):
-    URL = BaseURL + 'update'
-    req = requests.put(URL, headers=AuthHeader, json=entity)
+    URL = config.BaseURL + 'update'
+    req = requests.put(URL, headers=config.AuthHeader, json=entity)
 
 '''
 
@@ -693,8 +603,8 @@ Parameter Description
 '''
 
 def update_with_options(ent, opts):
-    URL = BaseURL + 'updateWithOptions'
-    req = requests.put(URL, headers=AuthHeader, json=ent)
+    URL = config.BaseURL + 'updateWithOptions'
+    req = requests.put(URL, headers=config.AuthHeader, json=ent)
     return req.json()
 
 
@@ -726,9 +636,9 @@ Output / Response
 '''
 
 def delete(obj_id):
-    URL = BaseURL + 'delete'
+    URL = config.BaseURL + 'delete'
     param = {'objectId': obj_id}
-    req = requests.delete(URL, headers=AuthHeader, params=param)
+    req = requests.delete(URL, headers=config.AuthHeader, params=param)
     
 '''
 
@@ -744,12 +654,12 @@ Output / Response
     
 
 def delete_with_options(obj_id, options):
-    URL = BaseURL + 'deleteWithOptions'
+    URL = config.BaseURL + 'deleteWithOptions'
     params = {
         'objectId': obj_id,
         'options': options
     }
-    req = requests.delete(URL, headers=AuthHeader, params=params)
+    req = requests.delete(URL, headers=config.AuthHeader, params=params)
 
 
 '''
@@ -801,7 +711,7 @@ Parameter Description
 '''
 
 def get_linked_entities(entityid, obj_type, start=0, count=10):
-    URL = BaseURL + 'getLinkedEntities'
+    URL = config.BaseURL + 'getLinkedEntities'
 
     params = {
             'entityId': entityid,
@@ -810,7 +720,7 @@ def get_linked_entities(entityid, obj_type, start=0, count=10):
             'count': count,
     }
 
-    req = requests.get(URL, headers=AuthHeader, params=params)
+    req = requests.get(URL, headers=config.AuthHeader, params=params)
     return req.json()
     
 '''
@@ -833,7 +743,7 @@ properties: Adds object properties, including user-defined fields.
 '''
 
 def link_entities(entity1id, entitity2id, properties):
-    URL = BaseURL + 'linkEntities'
+    URL = config.BaseURL + 'linkEntities'
     
     params = {
         'entity1Id': entity1id,
@@ -841,7 +751,7 @@ def link_entities(entity1id, entitity2id, properties):
         'properties': properties
     }
     
-    req = requests.put(URL, headers=AuthHeader, params=params)
+    req = requests.put(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 '''
@@ -865,7 +775,7 @@ This method works on the following types of objects and links:
 
 
 def unlink_entities(entity1id, entitity2id, properties):
-    URL = BaseURL + 'unlinkEntities'
+    URL = config.BaseURL + 'unlinkEntities'
     
     params = {
         'entity1Id': entity1id,
@@ -873,7 +783,7 @@ def unlink_entities(entity1id, entitity2id, properties):
         'properties': properties
     }
     
-    req = requests.put(URL, headers=AuthHeader, params=params)
+    req = requests.put(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 '''
@@ -984,7 +894,7 @@ properties:
 '''
 
 def assign_IP4_Address(configid, ipaddr, macaddr, hostinfo, action, props):
-    URL = BaseURL + 'assignIP4Address'
+    URL = config.BaseURL + 'assignIP4Address'
 
     params = {
         'configurationId': configid,
@@ -995,12 +905,12 @@ def assign_IP4_Address(configid, ipaddr, macaddr, hostinfo, action, props):
         'properties': props
     }
 
-    req = requests.post(URL, headers=AuthHeader, params=params)
+    req = requests.post(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 
 def add_IP4_block_by_CIDR(parentid, cidr, properties):
-    URL = BaseURL + 'addIP4BlockByCIDR'
+    URL = config.BaseURL + 'addIP4BlockByCIDR'
     
     params = {
         'parentId': parentid,
@@ -1008,29 +918,29 @@ def add_IP4_block_by_CIDR(parentid, cidr, properties):
         'properties': properties
     }
     
-    req = requests.post(URL, headers=AuthHeader, params=params)
+    req = requests.post(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 
 def get_ip4_address(ip):
-    URL = BaseURL + 'getIP4Address'
-    params = {'containerId': ConfigId, 'address': ip}
-    req = requests.get(URL, headers=AuthHeader, params=params)
+    URL = config.BaseURL + 'getIP4Address'
+    params = {'containerId': config.ConfigId, 'address': ip}
+    req = requests.get(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 def get_ipranged_by_ip(ip):
-    URL = BaseURL + 'getIPRangedByIP'
+    URL = config.BaseURL + 'getIPRangedByIP'
     params = {
-            'containerId': ConfigId,
+            'containerId': config.ConfigId,
             'type': 'IP4Network',
             'address': ip
     }
-    req = requests.get(URL, headers=AuthHeader, params=params)
+    req = requests.get(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 
 def assign_ip4Address(config_id, ip_addr, mac_addr, host_info, action, props):
-    URL = BaseURL + 'assignIP4Address'
+    URL = config.BaseURL + 'assignIP4Address'
     params = {
         'configurationId': config_id,
         'ip4Address': ip_addr,
@@ -1039,7 +949,7 @@ def assign_ip4Address(config_id, ip_addr, mac_addr, host_info, action, props):
         'action': action,
         'properties': props
     }
-    req = requests.post(URL, headers=AuthHeader, params=params)
+    req = requests.post(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 '''
@@ -1049,7 +959,7 @@ Low level functions to manipulate the IP address space
 '''
 
 def add_IP4_Network(bid, cidr, props):
-    URL = BaseURL + 'addIP4Network'
+    URL = config.BaseURL + 'addIP4Network'
 
     params = {
         'blockId': bid,
@@ -1057,7 +967,7 @@ def add_IP4_Network(bid, cidr, props):
         'properties': props
     }
 
-    req = resquests.post(URL, headers=AuthHeader, params=params)
+    req = resquests.post(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 '''
@@ -1095,10 +1005,10 @@ The entity has the following JSON structure:
 '''
 
 def add_entity(parent_id, entity):
-    URL = BaseURL + 'addEntity'
+    URL = config.BaseURL + 'addEntity'
     params = {'parentId': parent_id}
 
-    req = requests.post(URL, headers=AuthHeader, params=params, json=entity)
+    req = requests.post(URL, headers=config.AuthHeader, params=params, json=entity)
     return req.json()
 
 
@@ -1106,19 +1016,17 @@ def add_entity(parent_id, entity):
 
 Add Zone: Adds DNS zones.
 
-When using addZone(), you can use . (dot) characters to create the top level domain
-and subzones.
+When using addZone(), you can use . (dot) characters
+to create the top level domain and subzones.
 
-Output / Response
-
-Returns the object ID for the new DNS zone.
+Output / Response:
+    Returns the object ID for the new DNS zone.
 
 API Call:
 long addZone( long parentId, String absoluteName, String properties )
 
 
 Parameter Description:
-
 
 parentId: The object ID for the parent object to which the zone is being added.
           For top-level domains, the parent object is a DNS view.
@@ -1139,28 +1047,15 @@ deployable, set the deployable flag to true.
 '''
 
 
-def add_zone(fqdn):
-    URL = BaseURL + 'addZone'
-
-#    if is_zone(fqdn):
-#        print fqdn, 'is already a zone and can not be added'
-#        return -1
-
-    if fqdn in LegalTLDs:
-        parent_id = ViewId
-    else:
-        parent_id = get_id_by_name(parent_name(fqdn))
-        info = get_entity_by_id(parent_id)
-        if info['type'] != 'Zone':
-            bam_error('The parent of', fqdn, 'is not a zone')
-    
+def add_zone(parent_id, fqdn):
+    URL = config.BaseURL + 'addZone'
     params = {
             'parentId': parent_id,
             'absoluteName': fqdn,
             'properties': 'deployable=true',
     }
 
-    req = requests.post(URL, headers=AuthHeader, params=params)
+    req = requests.post(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 
@@ -1202,7 +1097,7 @@ Parameters:
 '''
 
 def get_zones_by_hint(containerid, options, start=0, count=1):
-        URL = BaseURL + 'getZonesByHint'
+        URL = config.BaseURL + 'getZonesByHint'
         if count > 10:
             count = 10
         params = {
@@ -1211,7 +1106,7 @@ def get_zones_by_hint(containerid, options, start=0, count=1):
             'count': count,
             'options': options
         }
-        req = requests.get(URL, headers=AuthHeader, params=params)
+        req = requests.get(URL, headers=config.AuthHeader, params=params)
         return req.json()
 
 
@@ -1239,7 +1134,7 @@ Parameter Description:
 
 
 def add_zone_template(parent_id, name, properties):
-    URL = BaseURL + 'addZoneTemplate'
+    URL = config.BaseURL + 'addZoneTemplate'
     
     params = {
         'parentId': parent_id,
@@ -1247,7 +1142,7 @@ def add_zone_template(parent_id, name, properties):
         'properties': properties,
     }
     
-    req = requests.post(URL, headers=AuthHeader, params=params)
+    req = requests.post(URL, headers=config.AuthHeader, params=params)
     return req.json()
     
 
@@ -1271,18 +1166,18 @@ rdata: Data for the RR in the BIND format
 '''
 
 def add_resource_record(fqdn, typ, rrdata, ttl=86400, props='comments=EmTee|'):
-    URL = BaseURL + 'addResourceRecord'
+    URL = config.BaseURL + 'addResourceRecord'
     params = {
-        'viewId': ViewId,
+        'viewId': config.ViewId,
         'absoluteName': fqdn,
         'type': typ,
         'rdata': rrdata,
         'ttl': str(ttl),
         'properties': props
     }
-    if Debug:
+    if config.Debug:
         print(params)
-    req = requests.post(URL, headers=AuthHeader, params=params)
+    req = requests.post(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 
@@ -1333,24 +1228,24 @@ Parameters:
 
 
 def add_host_record(fqdn, ips, ttl=86400, properties='comments=EmTee|'):
-    URL = BaseURL + 'addHostRecord'
+    URL = config.BaseURL + 'addHostRecord'
 
 # adding to the top level of the zone requires a leading dot
     if is_zone(fqdn):
         fqdn = '.' + fqdn
 
     params = {
-      'viewId': ViewId,
+      'viewId': config.ViewId,
       'absoluteName': fqdn,
       'addresses': ips,
       'ttl': ttl,
       'properties': properties
     }
-    if Debug:
+    if config.Debug:
         print('fqdn', fqdn)
         print('ips', ips)
 
-    req = requests.post(URL, headers=AuthHeader, params=params)
+    req = requests.post(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 
@@ -1427,13 +1322,13 @@ Parameters:
 '''
 
 def get_host_records_by_hint(options, start=0, count=10):
-    URL = BaseURL + 'getHostRecordsByHint'
+    URL = config.BaseURL + 'getHostRecordsByHint'
     params = {
       'options': options,
       'start': start,
       'count': count,
     }
-    req = requests.get(URL, headers=AuthHeader, params=params)
+    req = requests.get(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 # Editing specific types of Resource Records
@@ -1469,15 +1364,15 @@ properties:
 '''
 
 def add_TXT_Record(absname, txt, ttl=86400, props='comments=EmTee|'):
-    URL = BaseURL + 'addTXTRecord'
+    URL = config.BaseURL + 'addTXTRecord'
     params = {
-        'viewId': ViewId,
+        'viewId': config.ViewId,
         'absoluteName': absname,
         'txt': txt,
         'ttl': ttl,
         'properties': props
     }
-    req = requests.post(URL, headers=AuthHeader, params=params)
+    req = requests.post(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 '''
@@ -1501,7 +1396,7 @@ Output / Response
 '''
 
 def add_Generic_Record(viewid, absname, rr_type, rr_data, ttl, props):
-    URL = BaseURL + 'addGenericRecord'
+    URL = config.BaseURL + 'addGenericRecord'
     params = {
         'viewId': viewid,
         'absoluteName': absname,
@@ -1510,31 +1405,31 @@ def add_Generic_Record(viewid, absname, rr_type, rr_data, ttl, props):
         'ttl': ttl,
         'properties': props
     }
-    req = requests.post(URL, headers=AuthHeader, params=params)
+    req = requests.post(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 def add_MX_Record(absname, priority, mx_host, ttl=86400, props='comments=EmTee|'):
-    URL = BaseURL + 'addMXRecord'
+    URL = config.BaseURL + 'addMXRecord'
     params = {
-        'viewId': ViewId,
+        'viewId': config.ViewId,
         'absoluteName': absname,
         'priority': priority,
         'linkedRecordName': mx_host,
         'ttl': ttl,
         'properties': props
     }
-    req = requests.post(URL, headers=AuthHeader, params=params)
+    req = requests.post(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 
 def add_ExternalHost_Record(viewid, ex_host, props):
-    URL = BaseURL + 'addExternalHostRecord'
+    URL = config.BaseURL + 'addExternalHostRecord'
     params = {
         'viewId': viewid,
         'name': ex_host,
         'properties': props
     }
-    req = requests.post(URL, headers=AuthHeader, params=params)
+    req = requests.post(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 '''
@@ -1567,21 +1462,21 @@ Parameter Description
 
 
 def add_Alias_Record(absname, link, ttl=86400, props='comments=EmTee|'):
-    URL = BaseURL + 'addAliasRecord'
+    URL = config.BaseURL + 'addAliasRecord'
     params = {
-        'viewId': ViewId,
+        'viewId': config.ViewId,
         'absoluteName': absname,
         'linkedRecordName': link,
         'ttl': ttl,
         'properties': props
     }
-    req = requests.post(URL, headers=AuthHeader, params=params)
+    req = requests.post(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 
 def get_system_info():
-    URL = BaseURL + 'getSystemInfo'
-    req = requests.get(URL, headers=AuthHeader)
+    URL = config.BaseURL + 'getSystemInfo'
+    req = requests.get(URL, headers=config.AuthHeader)
     code = req.status_code
     if req.status_code == 200:
         return req.json()
@@ -1589,937 +1484,19 @@ def get_system_info():
         bam_error(req.text)
 
 def get_configuration_setting(id, name):
-    URL = BaseURL + 'getConfigurationSetting'
+    URL = config.BaseURL + 'getConfigurationSetting'
     params = {'configurationId': id, 'settingName': name}
-    req = requests.get(URL, headers=AuthHeader, params=params)
+    req = requests.get(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
 
-
-
-
-'''
-
-Higher Level Functions
-
-'''
-
-def bam_error(err_str):
-    print('BAM error:', err_str)
-    sys.exit()
-
-#
-# takes a mx_host and and optional priority
-# and returns a list of mx_host, priority
-#
-
-def mx_parse(value):
-    sep = ':'
-    if sep in value:
-        return value.split(sep)
-    else:
-        return (value, '10')
-
-# Takes a property list as a dictionary e.g.
-# {'ttl': '86400', 'absoluteName': 'fwsm-tabu.bkup.utoronto.ca', 'addresses': '128.100.96.158', 'reverseRecord': 'true'}
-# and returns it as a string equivalent:
-#   ttl=86400|absoluteName=fwsm-tabu.bkup.utoronto.ca|addresses=128.100.96.158|reverseRecord=true|
-
-def dict2props(d):
-    props = []
-    for k,v in d.items():
-        props.append('='.join([k,v]))
-    return '|'.join(props) + '|'
-
-
-# Takes a property list as a string e.g.
-#   ttl=86400|absoluteName=fwsm-tabu.bkup.utoronto.ca|addresses=128.100.96.158|reverseRecord=true|
-# and returns it as a dictionary equivalent:
-#   {'ttl': '86400', 'absoluteName': 'fwsm-tabu.bkup.utoronto.ca', 'addresses': '128.100.96.158', 'reverseRecord': 'true'}
-
-def props2dict(str):
-    dd = {}
-    ll = str.split('|')
-    for i in ll[0:-1]:
-        kv = i.split('=')
-        dd[kv[0]] = kv[1]
-    return dd
-
-
-def get_token():
-    global BaseURL
-
-
-
-'''
-    text: "Session Token-> BAMAuthToken: 7NfY4MTU1NDM5MDU1MzkzMzppc2VhLWFwaQ== <- for User : test-api"
-    json: Session Token-> BAMAuthToken: 7NfY4MTU1NDM5MDU1MzkzMzppc2VhLWFwaQ== <- for User : test-api
-'''
-
-def bam_init(debug):
-    global Debug, AuthHeader, ConfigId, ViewId, BaseURL
-
-#   ConfigName = 'Production'
-    ConfigName = 'Test'
-    ViewName = 'Public'
-    RootId = 0
-
-    BaseURL = os.getenv('BAM_API_URL')
-    if BaseURL is None:
-        bam_error('The BAM_API_URL shell variable must be set')
-    env_name = os.getenv('BAM_USER')
-    env_pw = os.getenv('BAM_PW')
-    if env_name is None or env_pw is None:
-        bam_error('The BAM_USER and BAM_PW shell variables must be set')
-
-    Debug = debug
-    Creds = {'username': env_name, 'password': env_pw}
-
-    URL = BaseURL + 'login'
-    req = requests.get(URL, params=Creds)
-    if Debug:
+def login(creds):
+    """Login to the Address Manager and return a session token"""
+    URL = config.BaseURL + 'login'
+    req = requests.get(URL, params=creds)
+    if config.Debug:
         print('status code: {}'.format(req.status_code))
         print('headers: {}'.format(req.headers))
         print('text: {}'.format(req.text))
         print('json: {}'.format(req.json()))
-
-    session_token = req.text.split()[3]
-
-    AuthHeader = {
-      'Authorization': 'BAMAuthToken: ' + session_token,
-      'Content-Type': 'application/json'
-    }
-
-    if Debug:
-        print('Authorization Header: {}'.format(AuthHeader))
-
-    config_ent = get_entity_by_name(RootId, ConfigName, 'Configuration')
-    if Debug:
-        print('Config Entity: {}'.format(config_ent))
-    ConfigId = config_ent['id']
-    if ConfigId > 0:
-        view_ent = get_entity_by_name(ConfigId, ViewName, 'View')
-        if Debug:
-            print('View Entity: {}'.format(view_ent))
-        ViewId = view_ent['id']
-    else:
-        bam_error('Error: The parent (Configuration) Id must be set before setting the View Id')
-
-    if Debug:
-        val = get_system_info()
-        vals = val.split('|')
-        for val in vals:
-            print(val)
-        print()
-
-
-def bam_logout():
-    URL = BaseURL + 'logout'
-    req = requests.get(URL, headers=AuthHeader)
-    sys.exit()
-
-
-# Deletes all data and RRs in the Zone tree including other Zones
-
-def delete_zone(fqdn):
-    zone_id = get_zone_id(fqdn)
-    if zone_id:
-        val = delete(zone_id)
-        return val
-
-
-#
-# given andy.bozo.cathy.dan.ca it returns bozo.cathy.dan.ca
-#
-
-def parent_name(fqdn):
-    return fqdn.split('.',1)[1]
-
-#
-# Get the information of an Entity (Id and parentId) given a FQDN or a CIDR block
-# Quick and dirty technique, based only on the fqdn
-#
-
-def get_info_by_name(fqdn):
-    obj_id = ViewId
-    names = fqdn.split('.')
-    lg = len(names)
-    for name in names[::-1]:
-        ent = get_entity_by_name(obj_id, name, 'Entity')
-        if Debug:
-            print('name: {} entity: {}'.format(name, ent))
-        pid = obj_id
-        obj_id = ent['id']
-    ent['pid'] = pid
-    if ent['type'] == 'Zone':
-        pid = ent['id']
-        name = ''
-    else:
-        pid = ent['pid']
-        name = fqdn.split('.')[0]
-    for obj_type in RRObjectTypes:
-        ents = get_entities(pid, obj_type, 0, 50)
-        if Debug:
-            if type(ents) is str:
-                print('Type: {} Ent: {}'.format(obj_type, ents))
-            else:
-                for e in ents:
-                    if e['name'] == name:
-                        print('Type: {} Ent: {}'.format(obj_type, e))
-    return ent
-
-
-def view_info_by_name(fqdn, *argv):
-    is_Zone = False
-    ll = len(argv)
-    if Debug: 
-        print('fqdn: {}'.format(fqdn))
-        for arg in argv:
-            print('arg: {}'.format(arg))
-    if ll > 0:
-        rr_type = argv[0]
-        obj_rr_type = RRTypeMap[rr_type]['obj_type']
-        if ll > 1:
-            obj_rr_key = RRTypeMap[rr_type]['prop_key']
-            value = argv[1]
-    else:
-        obj_rr_type = 'Entity'
-
-    obj_id = ViewId
-    names = fqdn.split('.')
-    for name in names[::-1]:
-        ent = get_entity_by_name(obj_id, name, 'Entity')
-        if Debug:
-            print('name: {} entity: {}'.format(name, ent))
-        pid = obj_id
-        obj_id = ent['id']
-    ent['pid'] = pid
-    if ent['type'] == 'Zone':
-        is_Zone = True
-        pid = ent['id']
-        name = ''
-    else:
-        name = names[0]
-    if Debug:
-        print()
-    if ll == 0:
-        ids = []
-        for obj_type in RRObjectTypes:
-            ents = get_entities(pid, obj_type, 0, 50)
-            for e in ents:
-                if e['name'] == name:
-                    ids.append(e['id'])
-        bind_print(ids)
-        if is_Zone:
-            rrs = {}
-            for obj_type in RRObjectTypes:
-                ents = get_entities(pid, obj_type, 0, 50)
-                if len(ents):
-                    for e in ents:
-                        name = e['name']
-                        if len(name):
-                            if name in rrs:
-                                lst = rrs[name]
-                                lst.append(e)
-                                rrs[name] = lst
-                            else:
-                                rrs[name] = [e]
-
-            ids = []
-            for fqdn in sorted(rrs):
-                for e in rrs[fqdn]:
-                    ids.append(e['id'])
-            bind_print(ids)
-
-    elif ll > 0:
-        ents = get_entities(pid, obj_rr_type, 0, 50)
-        ids = []
-        for e in ents:
-            if e['name'] == name:
-                if ll == 1:
-                    ids.append(e['id'])
-                else:
-                    d = props2dict(e['properties'])
-                    if value in d[obj_rr_key]:
-                        ids.append(e['id'])
-    return ent
-
-'''
-
- Find a RR based on more or less specificity by matching:
- a. fqdn
- b. fqdn + RRtype
- c. fqdn + RRtype + value
-
- Return an list of matching entities. If there are no matches, return an empty lists
-
-
-'''
-
-
-def find_rr(fqdn, *argv):
-    """ Given a fqdn and an RR type and optionally a value
-        return a list of entity IDs which match the given input
-    """
-    obj_types = RRObjectTypes
-    value = obj_rr_key = None
-
-    arglen = len(argv)
-    if arglen > 0:
-        rr_type = argv[0]
-        obj_types = [RRTypeMap[rr_type]['obj_type']]
-        if arglen > 1:
-            value = argv[1]
-            obj_rr_key = RRTypeMap[rr_type]['prop_key']
-
-    if fqdn[-1] == '.':
-        trailing_dot = True
-        fqdn = fqdn[:-1]
-    else:
-        trailing_dot = False
-
-    if Debug:
-        print('find_rr: rr_type, value, obj_rr_key')
-        print('     {} {} {}'.format(rr_type, value, obj_rr_key))
-    names = fqdn.split('.')
-    tld = names.pop()
-    if tld not in LegalTLDs:
-        print('Top level domain name must be one of: {}'.format(LegalTLDs))
-    ent = get_entity_by_name(ViewId, tld, 'Entity')
-    par_id = ent['id']
-
-    for name in names[::-1]:
-        ent = get_entity_by_name(par_id, name, 'Entity')
-        ent['pid'] = par_id
-        par_id = ent['id']
-    obj_id = ent['id']
-    par_id = ent['pid']
-    rr_ents = []
-    if ent['type'] == 'Zone':
-        par_id = obj_id
-        name = ''
-        for obj_type in obj_types:
-            ents = get_entities(par_id, obj_type, 0, 100)
-            if len(ents):
-                if trailing_dot:
-                        rr_ents += ents
-                else:
-                    for ent in ents:
-                        if ent['name'] == name:
-                            rr_ents.append(ent)
-    else:
-        for obj_type in obj_types:
-            ents = get_entities_by_name(par_id, name, obj_type, 0, 10)
-            if len(ents):
-                rr_ents += ents
-
-    if arglen == 2 and rr_type != 'CNAME':
-        found = False
-        if rr_type == 'A' or rr_type == 'TXT' or rr_type == 'MX':
-            for ent in rr_ents:
-                d = props2dict(ent['properties'])
-                values = d[obj_rr_key]
-                if rr_type == 'A':
-                    current_ips = values.split(',')
-                    if value in current_ips:
-                        found = True
-                        rr_ents = [ent]
-                        break
-                elif rr_type == 'MX':
-                    (mx_host, priority) = mx_parse(value)
-                    if d['priority'] == priority and mx_host == values:
-                        found = True
-                        rr_ents = [ent]
-                        break
-                elif value == values:
-                    found = True
-                    rr_ents = [ent]
-                    break
-        if not found:
-            rr_ents = []
-
-    ids = []
-    for rr_ent in rr_ents:
-        if rr_ent['name'] == '':
-            ids.append(rr_ent['id'])
-    for rr_ent in rr_ents:
-        if rr_ent['name'] != '':
-            ids.append(rr_ent['id'])
-    return ids
-
-def view_rr(fqdn, *argv):
-    ids = find_rr(fqdn, *argv)
-    bind_print(ids)
-
-#
-# Print out a list of BAM RR Entity IDs in Bind format
-#
-
-def bind_print(ent_ids):
-    if len(ent_ids) == 0:
-        print('No RRs to display')
-        return
-    str_lens = []
-    for ent_id in ent_ids:
-        ent = get_entity_by_id(ent_id)
-        d = props2dict(ent['properties'])
-        fqdn = d['absoluteName']
-        str_lens.append(len(fqdn))
-    maxlen = max(str_lens)
-    fmt_str = '{:<' + str(maxlen+4) + '} IN {:>5} {:<6} {}'
-    mx_str = fmt_str + ' {}'
-    for ent_id in ent_ids:
-        ent = get_entity_by_id(ent_id)
-        d = props2dict(ent['properties'])
-        fqdn = d['absoluteName']
-        if 'ttl' in d.keys():
-            ttl = d['ttl']
-        else:
-            ttl = d['ttl'] = '86400'
-            ent['properties'] = dict2props(d)
-            update(ent)
-        if ttl == '86400':
-            ttl = '     '
-        rr_type = BAM2Bind[ent['type']]
-        value = d[RRTypeMap[rr_type]['prop_key']]
-        if rr_type == 'A':
-            values = value.split(',')
-            for val in values:
-                print(fmt_str.format(fqdn, ttl, rr_type, val))
-        elif rr_type == 'TXT':
-            print(fmt_str.format(fqdn, ttl, rr_type, value))
-        elif rr_type == 'MX':
-            pri = d['priority']
-            print(mx_str.format(fqdn, ttl, rr_type, pri, value))
-        else:
-            print(fmt_str.format(fqdn, ttl, rr_type, value))
-
-#
-# A similar function but checking both the rr_type and value
-# returns 0 if object can not be found
-#
-
-def object_find(fqdn, rr_type, value):
-    id = 0
-    if rr_type == 'MX':
-        (value, priority) = mx_parse(value)
-
-    obj_type = RRTypeMap[rr_type]['obj_type']
-    prop_key = RRTypeMap[rr_type]['prop_key']
-
-    names = fqdn.split('.')
-    tld = names.pop()
-    tld_ent = get_entity_by_name(ViewId, tld, 'Zone')
-    pid = tld_ent['id']
-    pname = tld
-    while (len(names)):
-        name = names.pop()
-        ent = get_entity_by_name(pid, name, 'Entity')
-        obj_id = ent['id']
-        obj_ent = get_entity_by_id(obj_id)
-        if Debug:
-            print('name, id, ent:', name, obj_id, ent)
-        if len(names) == 0 and obj_id:
-            obj_type = obj_ent['type']
-            if obj_type == 'Zone':
-                pid = obj_id
-            else:
-                ents = get_entities(pid, obj_type, 0, 100)
-                if len(ents):
-                    for ent in ents:
-                        if 'properties' in ent and ent['properties'] is not None:
-                            d = props2dict(ent['properties'])
-                            if d['absoluteName'] == fqdn:
-                                if 'addresses' in d:
-                                    obj_id = ent['id']
-                                elif value == d[prop_key]:
-                                    obj_id = ent['id']
-        pname = name
-        pid = obj_id
-    return obj_id
-
-
-def get_id_by_name(fqdn):
-    ent = get_info_by_name(fqdn)
-    return ent['id']
-
-
-def get_pid_by_id(id):
-    ent = get_parent(id)
-    return ent['id']
-
-
-def get_info_by_id(id):
-    ent = get_entity_by_id(id)
-    pid = get_pid_by_id(id)
-    ent['pid'] = pid
-    return ent
-
-
-#
-# return the parent ID of an Object based on its name
-#
-
-
-def get_pid_by_name(fqdn):
-    info = get_info_by_name(fqdn)
-    return info['pid']
-
-#
-# gets an entity based on fqdn
-#
-
-def get_host_info(vid, fqdn):
-    names = fqdn.split('.')
-    lg = len(names)
-    igd = vid
-    for name in names[::-1]:
-        ent = get_entity_by_name(id, name, 'Entity')
-        if ent['type'] == 'Zone':
-            id = ent['id']
-            print(names[:l])
-            lg -= 1
-        else:
-            break
-    name = '.'.join(names[:l])
-    ent = get_entity_by_name(id, name, 'GenericRecord')
-    return ent
-    
-#
-# retrieves the Id of a Zone or Subzone
-#
-
-def get_zone_id(fqdn):
-    info = get_info_by_name(fqdn)
-    if info['type'] == 'Zone':
-        return info['id']
-    else:
-        print(fqdn, 'is not a zone')
-
-#
-# is_zone takes a name/fqdn as input and returns: False
-# if it is not a zone, otherwise the object_Id of the zone
-#
-
-def is_zone(fqdn):
-    ent = get_info_by_name(fqdn)
-    if ent['type'] == 'Zone':
-        return ent['id']
-    else:
-        return False
-
-#
-# Add a zone using the generic add_generic call rather than
-# the specific add_zone()one
-#
-    
-def add_zone_generic(fqdn):
-    dot = '.'
-    n = fqdn.split(dot)
-    nm = n[0]
-    subzone = dot.join(n[1:])
-    par_id = get_id_by_name(subzone)
-    props = 'deployable=true|'
-    props += 'absoluteName=' + fqdn + '|'
-    ent = {
-        'name': nm,
-        'type': 'Zone',
-        'properties': props
-    }
-    val = add_entity(par_id, ent)
-    return val
-
-def is_external_host(fqdn):
-    if fqdn in get_external_hosts():
-        return True
-    else:
-        return False
-
-
-def is_host_record(fqdn):
-    ent = get_info_by_name(fqdn)
-    if Debug:
-        print('host record check: {}'.format(ent))
-    if ent['id'] > 0 and ent['type'] == 'HostRecord':
-        return True
-    else:
-        return False
-
-
-def add_PTR_rr(fqdn, ipaddr, ttl=86400):
-    macaddr = ''
-    hostinfo = ''
-    action = 'MAKE_STATIC'
-    props = 'ptrs=' + str(ViewId) + ',' + fqdn
-    val = assign_IP4_Address(ConfigId, ipaddr, macaddr, hostinfo, action, props)
-    return val
-
-def get_external_hosts():
-    exhosts = []
-    ents = get_entities(ViewId, 'ExternalHostRecord', 0, 250)
-    for ent in ents:
-        exhosts.append(ent['name'])
-    return exhosts
-
-def add_external_host(exhost):
-    exhosts = get_external_hosts()
-    if exhost not in exhosts:
-        val = add_ExternalHost_Record(ViewId, exhost, 'comments=Ext. Host|')
-        print(val)
-
-#
-# delete a given generic RR
-#
-
-def delete_rr(fqdn, rr_type, *argv):
-    if argv:
-        value = argv[0]
-    else:
-        value = '*'
-    if Debug:
-        print('Input data: {} {} {}'.format(fqdn, rr_type, value))
-
-# there can only be one CNAME record for a FQDN so the value does not matter
-    if rr_type == 'CNAME':
-        obj_id = find_rr(fqdn, rr_type)
-    else:
-        obj_id = find_rr(fqdn, rr_type, value)
-    if Debug:
-        print('find_rr: obj_id: {}'.format(obj_id))
-    if obj_id:
-        print('This RR exists and will be deleted')
-        bind_print(obj_id)
-        if rr_type == 'A':
-            obj_prop_key = RRTypeMap[rr_type]['prop_key']
-            ent = get_entity_by_id(obj_id[0])
-            d = props2dict(ent['properties'])
-            ip_list = d[obj_prop_key].split(',')
-            ip_list.remove(value)
-            if ip_list:
-                d[obj_prop_key] = ','.join(ip_list)
-                ent['properties'] = dict2props(d)
-                update(ent)
-            else:
-                delete(obj_id[0])
-        else:
-            delete(obj_id[0])
-    else:
-        print('No RR exists matching {} {} {}'.format(fqdn,rr_type,value))
-
-
-"""
-
-def delete_rr_old(fqdn, *argv):
-    ll = len(argv)
-    if ll:
-        rr_type = argv[0]
-# there should be only zero or one CNAME record per fqdn
-        if rr_type == 'CNAME':
-            id_list = find_rr(fqdn, rr_type)
-            if len(id_list):
-                obj_id = id_list[0]
-                print('deleting:')
-                bind_print([obj_id])
-                delete(obj_id)
-            else:
-                print('No RR record of type {} associated with {}'.format(rr_type, fqdn))
-        elif ll > 1:
-            value = argv[1]
-            obj_prop_key = RRTypeMap[rr_type]['prop_key']
-            id_list = find_rr(fqdn, rr_type, value)
-            if id_list:
-                obj_id = id_list[0]
-                if rr_type == 'A':
-                    ent = get_entity_by_id(obj_id)
-                    d = props2dict(ent['properties'])
-                    ips = d[obj_prop_key].split(',')
-                    ips.remove(value)
-                    if ips:
-                        d[obj_prop_key] = ','.join(ips)
-                        ent['properties'] = dict2props(d)
-                        print('Removing IP address: {} from RR(s):'.format(value))
-                        update(ent)
-                        bind_print([obj_id])
-                    else:
-                        print('Removing RR {} with IP address: {}'.format(fqdn, value))
-                        delete(obj_id)
-                        bind_print([obj_id])
-                elif rr_type == 'TXT' or rr_type == 'CNAME' or rr_type == 'MX':
-                    print('Removing {} record'.format(rr_type))
-                    bind_print([obj_id])
-                    delete(obj_id)
-            else:
-                print('Could not find RR with name {} of type {} with value {} to delete'.format(fqdn, rr_type, value))
-
-"""
-
-#
-# fqdn is at the zone level or is a new RR below a zone
-# new code using find_rr
-#
-
-def add_rr(fqdn, rr_type, value, ttl):
-    if Debug:
-        print('Input data: {} {} {} {}'.format(fqdn, rr_type, value, ttl))
-
-
-    obj_prop_key = RRTypeMap[rr_type]['prop_key']
-    obj_id = find_rr(fqdn, rr_type, value)
-    if obj_id:
-        print('This {} Record already exists'.format(rr_type))
-        bind_print(obj_id)
-    elif rr_type == 'A':
-        obj_id = find_rr(fqdn, rr_type)
-        if obj_id:
-            ent = get_entity_by_id(obj_id[0])
-            d = props2dict(ent['properties'])
-            ip_list = d[obj_prop_key]
-            ip_list += ',' + value
-            d[obj_prop_key] = ip_list
-            d['ttl'] = ttl
-            ent['properties'] = dict2props(d)
-            update(ent)
-            bind_print(obj_id)
-        else:
-            obj_id = add_host_record(fqdn, value, ttl)
-            print('Added the new Host Record')
-            bind_print([obj_id])
-    elif rr_type == 'TXT':
-        obj_id = add_TXT_Record(fqdn, value, ttl)
-        print('added new TXT record:')
-        bind_print([obj_id])
-    elif rr_type == 'CNAME':
-        obj_id = add_Alias_Record(fqdn, value, ttl)
-        print('added new CNAME record:')
-        bind_print([obj_id])
-    elif rr_type == 'MX':
-        (mx_host, priority) = mx_parse(value)
-        if is_zone(fqdn):
-            fqdn = '.' + fqdn
-        obj_id = add_MX_Record(fqdn, priority, mx_host, ttl)
-        print('added new MX record:')
-        bind_print([obj_id])
-    return obj_id
-
-"""
-# old code
-
-    obj_rr_type = RRTypeMap[rr_type]['obj_type']
-    obj_prop_key = RRTypeMap[rr_type]['prop_key']
-    name = fqdn.split('.')[0]
-
-#
-# use BAM higher level functions rather than lower level add_entity
-#
-
-    generic_ent = get_info_by_name(fqdn)
-    obj_id = generic_ent['id']
-    obj_type = generic_ent['type']
-    obj_pid = generic_ent['pid']
-    specific_ent = get_entity_by_id(obj_id)
-    if Debug:
-        print('generic entity:', generic_ent)
-        print('specific entity:',specific_ent)
-    is_Zone = False
-    if obj_type == 'Zone':
-        obj_pid = obj_id
-        is_Zone = True
-        name = ''
-        fqdn = '.' + fqdn
-    if obj_id:
-        ents = get_entities(obj_pid, obj_rr_type, 0, 100)
-        if Debug:
-            for ent in ents:
-                print('\t', ent)
-
-#
-# assumes that the value includes only ONE new IP address
-#
-
-    if rr_type == 'A':
-        ip = value
-        if obj_id: # if there were some RRs found
-            obj = get_ipranged_by_ip(ip)
-            if type(obj) is str or obj['id'] == 0:
-                print('The IP Address {} is not in a defined network space'.format(ip))
-                return False
-            for ent in ents:
-                if name == ent['name']:
-                    if Debug:
-                        print('update before: {}'.format(ent))
-                    d = props2dict(ent['properties'])
-                    old_ips = d[obj_prop_key].split(',')
-                    if ip in old_ips:
-                        print('IP address {} is already assigned to {}'.format(ip, fqdn))
-                        return False
-                    d[obj_prop_key] += ',' + ip
-                    d['ttl'] = ttl
-                    ent['properties'] = dict2props(d)
-                    if Debug:
-                        print('update after: {}'.format(ent))
-                    update(ent)
-                    if is_Zone:
-                        fqdn = fqdn[1:]
-                    print('Added an additional Host Record: {} <--> {}'.format(fqdn, ip))
-                    break
-            if obj_id: # no resource record matches found in the list of ents
-                if Debug:
-                    print('Adding a new Resource Record {}'.format(specific_ent))
-                obj_id = add_host_record(fqdn, ip, ttl)
-                if is_Zone:
-                    fqdn = fqdn[1:]
-                print('Added a new Host record: {} <--> {}'.format(fqdn, ip))
-        else:   # no resource records of all of rr_type at zone or sub-zone level
-            if Debug:
-                print('Adding a First Resource Record of type: {}'.format(obj_rr_type))
-            obj_id = add_host_record(fqdn, ip, ttl)
-            if is_Zone:
-                fqdn = fqdn[1:]
-            print('Added a new Host record: {} <--> {}'.format(fqdn, ip))
-
-    elif rr_type == 'TXT':
-        if obj_id:
-            updated = False
-            duplicate = False
-            for ent in ents:
-                d = props2dict(ent['properties'])
-                if name == ent['name'] and value == d[obj_prop_key]:
-                    duplicate = True
-                    if ttl != d['ttl']:
-                        d['ttl'] = ttl
-                        ent['properties'] = dict2props(d)
-                        update(ent)
-                        updated = True
-                    break
-            if updated:
-                print('TXT record TTL updated:')
-            elif duplicate:
-                print('Duplicate of existing TXT record:')
-            else:
-                obj_id = add_TXT_Record(fqdn, value, ttl)
-                print('added new TXT record:')
-                bind_print([obj_id])
-        else: # No TXT records at all
-            obj_id = add_TXT_Record(fqdn, value, ttl)
-            print('added new TXT record:')
-            bind_print([obj_id])
-        return obj_id
-
-    elif rr_type == 'MX':
-        (mx_host, priority) = mx_parse(value)
-        if not (is_host_record(mx_host) or is_external_host(mx_host)):
-                print('MX host:', mx_host, 'must be defined either as a Host Record or an External Host')
-                return 0
-        ent_id = 0
-        if obj_id:
-            change = True
-            for ent in ents:
-                props = ent['properties']
-                d = props2dict(props)
-                if name == ent['name']:
-                    if mx_host == d[obj_prop_key]:
-                        if priority == d['priority']:
-                            if ttl == d['ttl']:
-                                change = False
-                                break
-            if change:
-                ent_id = add_MX_Record(fqdn, priority, mx_host, ttl)
-                if type(ent_id) is str: 
-                    print(ent_id)
-                else:
-                    print('Added the following RR:')
-                    bind_print([ent_id])
-            else:
-                print('Duplicate MX Record')
-        else:
-            ent_id = add_MX_Record(fqdn, priority, mx_host, ttl)
-            if type(ent_id) is str: 
-                print(ent_id)
-            else:
-                print('Added the following RR:')
-                bind_print([ent_id])
-        return ent_id
-
-    elif rr_type == 'CNAME':
-        if not (is_host_record(value) or is_external_host(value)):
-                print('Alias host:', value, 'must be defined either as a Host Record or an External Host')
-                return 0
-        ent_id = 0
-        if is_Zone:
-            print('CNAME records are not allowed at the top of a Zone')
-            return 0
-        if obj_id:
-            cname_exists = False
-            for ent in ents:
-                if name == ent['name']:
-                    print('A CNAME record already exists')
-                    d = props2dict(ent['properties'])
-                    if ttl != d['ttl'] or d[obj_prop_key] != value:
-                        print('Updating it with the given data')
-                        d[obj_prop_key] = value
-                        d['ttl'] = ttl
-                        ent['properties'] = dict2props(d)
-                        update(ent)
-                    cname_exists = True
-                    break
-            if not cname_exists:
-                obj_id = add_Alias_Record(fqdn, value, ttl)
-                print('Added CNAME record:')
-                bind_print([obj_id])
-        else:
-            obj_id = add_Alias_Record(fqdn, value, ttl)
-            print('Added CNAME record:')
-            bind_print([obj_id])
-        return obj_id
-
-"""
-
-#
-# update a given RR to the state of the values given
-# Using find_rr
-#
-
-def update_rr(fqdn, rr_type, value, ttl):
-
-    id_list = find_rr(fqdn, rr_type)
-    if not id_list:
-        print('Can not find a RR to update with name {} with type {}'.format(fqdn, rr_type))
-        return
-# There should only be one RR found with the fqdb and type given and value
-# If there are more than one, update the first one only
-    obj_id = id_list[0]
-    ent = get_entity_by_id(obj_id)
-    if Debug:
-        print('fqdn {} rr_type {} value {}'.format(fqdn, rr_type, value))
-        print('ent bef', ent)
-    prop_key = RRTypeMap[rr_type]['prop_key']
-    d = props2dict(ent['properties'])
-    d['ttl'] = ttl
-    if rr_type ==  'MX':
-        (pri, mx) = value.split(',')
-        d[prop_key] = mx
-        d['priority'] = pri
-        ent['properties'] = dict2props(d)
-    elif rr_type == 'A':
-        org_value = value
-        ip_list = value.split(',')
-        ip_tup = tuple(ip_list)
-        for ip in ip_tup:
-            ip_test_ent = get_ipranged_by_ip(ip)
-            if type(ip_test_ent) is str or ip_test_ent['id'] == 0:
-                print('IP address: {} is not in a defined network'.format(ip))
-                ip_list.remove(ip)
-        if ip_list:
-            d[prop_key] = ','.join(ip_list)
-            ent['properties'] = dict2props(d)
-        else:
-            print('None of the IP addresses in {} could be updated'.format(org_value))
-            return
-    elif rr_type == 'TXT' or rr_type == 'CNAME':
-        d[prop_key] = value
-        ent['properties'] = dict2props(d)
-    if Debug:
-        print('ent aft:', ent)
-    update(ent)
-    print('Updated RR as follows:')
-    bind_print([obj_id])
+    return req.text.split()[3]
