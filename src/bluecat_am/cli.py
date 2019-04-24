@@ -1,34 +1,38 @@
-from bluecat_am import util
-
 import click
+from bluecat_am import config
+from bluecat_am import util
 
 @click.command()
 
-@click.argument('action', nargs=1, default='add')
-@click.argument('fqdn', nargs=1, default='uoft.ca')
-@click.argument('rr_type', nargs=1, default='defRR')
-@click.argument('value', nargs=1, default='defVAL')
-@click.argument('ttl', nargs=1, default='86400')
-
 @click.option(
-        '--debug', default=False,
-        help='To show what is going on'
+        '-v', '--verbose', is_flag=True,
+        help='Show what is going on for debugging purposes'
         )
+
+@click.argument('action')
+@click.argument('fqdn')
+@click.argument('rr_type', default='defRR')
+@click.argument('value', default='defVAL')
+@click.argument('ttl', default='86400')
+
 
 # Main programme
 
-def run(action, fqdn, rr_type, value, ttl, debug):
-    '''
-    Command line interface to BAM DNS System \n
-    Usage: action fqdn rr_type ttl value \n
+def run(action, fqdn, rr_type, value, ttl, verbose):
+    """ Command line interface to BAM DNS System\n
+    Usage: bamcli action fqdn rr_type ttl value\n
     E.g.  $ add bozo.uoft.ca A 3600 10.10.10.1 [TTL]
-    '''
+    """
 
-    util.bam_init(debug)
+    config.Debug = verbose
 
-    if debug:
+    if verbose:
         click.echo('action: {}'.format(action))
-        click.echo('   {}  {}  {} {}'.format(fqdn, ttl, rr_type, value))
+        click.echo('    fqdn: {} rr_type: {} value: {}'.format(fqdn,rr_type,value))
+        click.echo()
+
+    util.bam_init()
+
 
     if action == 'add':
         if rr_type == 'defRR' or value == 'defVAL':

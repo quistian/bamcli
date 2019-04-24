@@ -1,6 +1,7 @@
 #/usr/bin/env python
 
 import os
+import sys
 from bluecat_am import config
 from bluecat_am import api
 
@@ -53,7 +54,7 @@ def props2dict(str):
     json: Session Token-> BAMAuthToken: 7NfY4MTU1NDM5MDU1MzkzMzppc2VhLWFwaQ== <- for User : test-api
 '''
 
-def bam_init(debug):
+def bam_init():
 
 #   config.ConfigName = 'Production'
 
@@ -65,7 +66,6 @@ def bam_init(debug):
     if env_name is None or env_pw is None:
         bam_error('The BAM_USER and BAM_PW shell variables must be set')
 
-    config.Debug = debug
     Creds = {'username': env_name, 'password': env_pw}
     session_token = api.login(Creds)
 
@@ -110,7 +110,6 @@ def delete_zone(fqdn):
     if zone_id:
         val = api.delete(zone_id)
         return val
-
 
 #
 # Get the information of an Entity (Id and parentId) given a FQDN or a CIDR block
@@ -235,11 +234,17 @@ def view_info_by_name(fqdn, *argv):
 
 
 def find_rr(fqdn, *argv):
-    """ Given a fqdn and an RR type and optionally a value
+    """Given a fqdn and an RR type and optionally a value
         return a list of entity IDs which match the given input
     """
+    rr_type = None
+    value = None
+    obj_rr_key = None
+
     obj_types = config.RRObjectTypes
-    value = obj_rr_key = None
+
+    if config.Debug:
+        print('find_rr fqdn: {} argv: {}'.format(fqdn, argv))
 
     arglen = len(argv)
     if arglen > 0:
@@ -354,7 +359,7 @@ def bind_print(ent_ids):
         else:
             ttl = d['ttl'] = '86400'
             ent['properties'] = dict2props(d)
-            update(ent)
+            api.update(ent)
         if ttl == '86400':
             ttl = '     '
         rr_type = config.BAM2Bind[ent['type']]
@@ -542,7 +547,7 @@ def get_external_hosts():
 def add_external_host(exhost):
     exhosts = get_external_hosts()
     if exhost not in exhosts:
-        val = add_ExternalHost_Record(config.ViewId, exhost, 'comments=Ext. Host|')
+        val = api.add_ExternalHost_Record(config.ViewId, exhost, 'comments=Ext. Host|')
         print(val)
 
 #
@@ -566,7 +571,6 @@ def delete_rr(fqdn, rr_type, *argv):
         print('find_rr: obj_id: {}'.format(obj_id))
     if obj_id:
         print('This RR exists and will be deleted')
-        bind_print(obj_id)
         if rr_type == 'A':
             obj_prop_key = config.RRTypeMap[rr_type]['prop_key']
             ent = api.get_entity_by_id(obj_id[0])
@@ -576,60 +580,20 @@ def delete_rr(fqdn, rr_type, *argv):
             if ip_list:
                 d[obj_prop_key] = ','.join(ip_list)
                 ent['properties'] = dict2props(d)
-                update(ent)
+                if config.Debug:
+                    print('before:')
+                    bind_print(obj_id)
+                api.update(ent)
+                if config.Debug:
+                    print('after:')
+                    bind_print(obj_id)
             else:
-                delete(obj_id[0])
+                api.delete(obj_id[0])
         else:
-            delete(obj_id[0])
+            api.delete(obj_id[0])
     else:
         print('No RR exists matching {} {} {}'.format(fqdn,rr_type,value))
 
-
-"""
-
-def delete_rr_old(fqdn, *argv):
-    ll = len(argv)
-    if ll:
-        rr_type = argv[0]
-# there should be only zero or one CNAME record per fqdn
-        if rr_type == 'CNAME':
-            id_list = find_rr(fqdn, rr_type)
-            if len(id_list):
-                obj_id = id_list[0]
-                print('deleting:')
-                bind_print([obj_id])
-                delete(obj_id)
-            else:
-                print('No RR record of type {} associated with {}'.format(rr_type, fqdn))
-        elif ll > 1:
-            value = argv[1]
-            obj_prop_key = config.RRTypeMap[rr_type]['prop_key']
-            id_list = find_rr(fqdn, rr_type, value)
-            if id_list:
-                obj_id = id_list[0]
-                if rr_type == 'A':
-                    ent = api.get_entity_by_id(obj_id)
-                    d = props2dict(ent['properties'])
-                    ips = d[obj_prop_key].split(',')
-                    ips.remove(value)
-                    if ips:
-                        d[obj_prop_key] = ','.join(ips)
-                        ent['properties'] = dict2props(d)
-                        print('Removing IP address: {} from RR(s):'.format(value))
-                        update(ent)
-                        bind_print([obj_id])
-                    else:
-                        print('Removing RR {} with IP address: {}'.format(fqdn, value))
-                        delete(obj_id)
-                        bind_print([obj_id])
-                elif rr_type == 'TXT' or rr_type == 'CNAME' or rr_type == 'MX':
-                    print('Removing {} record'.format(rr_type))
-                    bind_print([obj_id])
-                    delete(obj_id)
-            else:
-                print('Could not find RR with name {} of type {} with value {} to delete'.format(fqdn, rr_type, value))
-
-"""
 
 #
 # fqdn is at the zone level or is a new RR below a zone
@@ -639,7 +603,6 @@ def delete_rr_old(fqdn, *argv):
 def add_rr(fqdn, rr_type, value, ttl):
     if config.Debug:
         print('Input data: {} {} {} {}'.format(fqdn, rr_type, value, ttl))
-
 
     obj_prop_key = config.RRTypeMap[rr_type]['prop_key']
     obj_id = find_rr(fqdn, rr_type, value)
@@ -656,201 +619,32 @@ def add_rr(fqdn, rr_type, value, ttl):
             d[obj_prop_key] = ip_list
             d['ttl'] = ttl
             ent['properties'] = dict2props(d)
-            update(ent)
+            api.update(ent)
+            print('Added Host Record:')
             bind_print(obj_id)
         else:
-            obj_id = add_host_record(fqdn, value, ttl)
-            print('Added the new Host Record')
+            # adding to the top level of the zone requires a leading dot
+            if is_zone(fqdn):
+                fqdn = '.' + fqdn
+            obj_id = api.add_host_record(fqdn, value, ttl)
+            print('Added Host Record:')
             bind_print([obj_id])
     elif rr_type == 'TXT':
-        obj_id = add_TXT_Record(fqdn, value, ttl)
+        obj_id = api.add_TXT_Record(fqdn, value, ttl)
         print('added new TXT record:')
         bind_print([obj_id])
     elif rr_type == 'CNAME':
-        obj_id = add_Alias_Record(fqdn, value, ttl)
+        obj_id = api.add_Alias_Record(fqdn, value, ttl)
         print('added new CNAME record:')
         bind_print([obj_id])
     elif rr_type == 'MX':
         (mx_host, priority) = mx_parse(value)
         if is_zone(fqdn):
             fqdn = '.' + fqdn
-        obj_id = add_MX_Record(fqdn, priority, mx_host, ttl)
+        obj_id = api.add_MX_Record(fqdn, priority, mx_host, ttl)
         print('added new MX record:')
         bind_print([obj_id])
     return obj_id
-
-"""
-# old code
-
-    obj_rr_type = config.RRTypeMap[rr_type]['obj_type']
-    obj_prop_key = config.RRTypeMap[rr_type]['prop_key']
-    name = fqdn.split('.')[0]
-
-#
-# use BAM higher level functions rather than lower level add_entity
-#
-
-    generic_ent = get_info_by_name(fqdn)
-    obj_id = generic_ent['id']
-    obj_type = generic_ent['type']
-    obj_pid = generic_ent['pid']
-    specific_ent = api.get_entity_by_id(obj_id)
-    if config.Debug:
-        print('generic entity:', generic_ent)
-        print('specific entity:',specific_ent)
-    is_Zone = False
-    if obj_type == 'Zone':
-        obj_pid = obj_id
-        is_Zone = True
-        name = ''
-        fqdn = '.' + fqdn
-    if obj_id:
-        ents = api.get_entities(obj_pid, obj_rr_type, 0, 100)
-        if config.Debug:
-            for ent in ents:
-                print('\t', ent)
-
-#
-# assumes that the value includes only ONE new IP address
-#
-
-    if rr_type == 'A':
-        ip = value
-        if obj_id: # if there were some RRs found
-            obj = api.get_ipranged_by_ip(ip)
-            if type(obj) is str or obj['id'] == 0:
-                print('The IP Address {} is not in a defined network space'.format(ip))
-                return False
-            for ent in ents:
-                if name == ent['name']:
-                    if config.Debug:
-                        print('update before: {}'.format(ent))
-                    d = props2dict(ent['properties'])
-                    old_ips = d[obj_prop_key].split(',')
-                    if ip in old_ips:
-                        print('IP address {} is already assigned to {}'.format(ip, fqdn))
-                        return False
-                    d[obj_prop_key] += ',' + ip
-                    d['ttl'] = ttl
-                    ent['properties'] = dict2props(d)
-                    if config.Debug:
-                        print('update after: {}'.format(ent))
-                    update(ent)
-                    if is_Zone:
-                        fqdn = fqdn[1:]
-                    print('Added an additional Host Record: {} <--> {}'.format(fqdn, ip))
-                    break
-            if obj_id: # no resource record matches found in the list of ents
-                if config.Debug:
-                    print('Adding a new Resource Record {}'.format(specific_ent))
-                obj_id = add_host_record(fqdn, ip, ttl)
-                if is_Zone:
-                    fqdn = fqdn[1:]
-                print('Added a new Host record: {} <--> {}'.format(fqdn, ip))
-        else:   # no resource records of all of rr_type at zone or sub-zone level
-            if config.Debug:
-                print('Adding a First Resource Record of type: {}'.format(obj_rr_type))
-            obj_id = add_host_record(fqdn, ip, ttl)
-            if is_Zone:
-                fqdn = fqdn[1:]
-            print('Added a new Host record: {} <--> {}'.format(fqdn, ip))
-
-    elif rr_type == 'TXT':
-        if obj_id:
-            updated = False
-            duplicate = False
-            for ent in ents:
-                d = props2dict(ent['properties'])
-                if name == ent['name'] and value == d[obj_prop_key]:
-                    duplicate = True
-                    if ttl != d['ttl']:
-                        d['ttl'] = ttl
-                        ent['properties'] = dict2props(d)
-                        update(ent)
-                        updated = True
-                    break
-            if updated:
-                print('TXT record TTL updated:')
-            elif duplicate:
-                print('Duplicate of existing TXT record:')
-            else:
-                obj_id = add_TXT_Record(fqdn, value, ttl)
-                print('added new TXT record:')
-                bind_print([obj_id])
-        else: # No TXT records at all
-            obj_id = add_TXT_Record(fqdn, value, ttl)
-            print('added new TXT record:')
-            bind_print([obj_id])
-        return obj_id
-
-    elif rr_type == 'MX':
-        (mx_host, priority) = mx_parse(value)
-        if not (is_host_record(mx_host) or is_external_host(mx_host)):
-                print('MX host:', mx_host, 'must be defined either as a Host Record or an External Host')
-                return 0
-        ent_id = 0
-        if obj_id:
-            change = True
-            for ent in ents:
-                props = ent['properties']
-                d = props2dict(props)
-                if name == ent['name']:
-                    if mx_host == d[obj_prop_key]:
-                        if priority == d['priority']:
-                            if ttl == d['ttl']:
-                                change = False
-                                break
-            if change:
-                ent_id = add_MX_Record(fqdn, priority, mx_host, ttl)
-                if type(ent_id) is str: 
-                    print(ent_id)
-                else:
-                    print('Added the following RR:')
-                    bind_print([ent_id])
-            else:
-                print('Duplicate MX Record')
-        else:
-            ent_id = add_MX_Record(fqdn, priority, mx_host, ttl)
-            if type(ent_id) is str: 
-                print(ent_id)
-            else:
-                print('Added the following RR:')
-                bind_print([ent_id])
-        return ent_id
-
-    elif rr_type == 'CNAME':
-        if not (is_host_record(value) or is_external_host(value)):
-                print('Alias host:', value, 'must be defined either as a Host Record or an External Host')
-                return 0
-        ent_id = 0
-        if is_Zone:
-            print('CNAME records are not allowed at the top of a Zone')
-            return 0
-        if obj_id:
-            cname_exists = False
-            for ent in ents:
-                if name == ent['name']:
-                    print('A CNAME record already exists')
-                    d = props2dict(ent['properties'])
-                    if ttl != d['ttl'] or d[obj_prop_key] != value:
-                        print('Updating it with the given data')
-                        d[obj_prop_key] = value
-                        d['ttl'] = ttl
-                        ent['properties'] = dict2props(d)
-                        update(ent)
-                    cname_exists = True
-                    break
-            if not cname_exists:
-                obj_id = add_Alias_Record(fqdn, value, ttl)
-                print('Added CNAME record:')
-                bind_print([obj_id])
-        else:
-            obj_id = add_Alias_Record(fqdn, value, ttl)
-            print('Added CNAME record:')
-            bind_print([obj_id])
-        return obj_id
-
-"""
 
 #
 # update a given RR to the state of the values given
@@ -898,6 +692,6 @@ def update_rr(fqdn, rr_type, value, ttl):
         ent['properties'] = dict2props(d)
     if config.Debug:
         print('ent aft:', ent)
-    update(ent)
+    api.update(ent)
     print('Updated RR as follows:')
     bind_print([obj_id])

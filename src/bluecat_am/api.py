@@ -1230,10 +1230,6 @@ Parameters:
 def add_host_record(fqdn, ips, ttl=86400, properties='comments=EmTee|'):
     URL = config.BaseURL + 'addHostRecord'
 
-# adding to the top level of the zone requires a leading dot
-    if is_zone(fqdn):
-        fqdn = '.' + fqdn
-
     params = {
       'viewId': config.ViewId,
       'absoluteName': fqdn,
