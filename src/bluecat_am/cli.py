@@ -1,19 +1,35 @@
+import re
 import click
 from bluecat_am import config
 from bluecat_am import util
+
+def validate_fqdn(ctx, param, value):
+    pattern = '[\w]+(\.[\w]+)+'
+    if not re.match(pattern, value):
+        raise click.BadParameter('Value must be in the form: hobo.utoronto.ca')
+    return value
+
+def validate_value(ctx, param, value):
+    return value
 
 @click.command()
 
 @click.option(
         '-v', '--verbose', is_flag=True,
-        help='Show what is going on for debugging purposes'
-        )
+        help='Show what is going on for debugging purposes')
 
-@click.argument('action')
-@click.argument('fqdn')
-@click.argument('rr_type', default='defRR')
-@click.argument('value', default='defVAL')
-@click.argument('ttl', default='86400')
+@click.argument('action',
+                type=click.Choice(['view', 'add', 'delete', 'modify']),
+                required=True)
+@click.argument('fqdn', type=click.STRING,
+                required=True,
+                callback=validate_fqdn)
+@click.argument('rr_type',
+                type=click.Choice(['A', 'MX', 'CNAME', 'TXT', 'defRR']),
+                default='defRR')
+@click.argument('value', type=click.STRING, default='defVAL',
+                callback=validate_value)
+@click.argument('ttl', type=click.STRING, default='86400')
 
 
 # Main programme
