@@ -18,18 +18,22 @@ def validate_value(ctx, param, value):
 
 @group()
 @option(
+    '-s', '--silent', is_flag=True,
+    help='Minimize the output from commands. Silence is golden')
+@option(
     '-v', '--verbose',
     is_flag=True,
     help='Show what is going on for debugging purposes'
 )
 @pass_context
-def run(ctx: Context, verbose):
+def run(ctx: Context, silent, verbose):
     """ Command line interface to BAM DNS System\n
     E.g.  $bamcli add bozo.uoft.ca A 3600 10.10.10.1 [TTL]
     """
-
     ctx.obj = dict()
+    ctx.obj['SILENT'] = silent
     ctx.obj['DEBUG'] = verbose
+    config.Silent = silent
     config.Debug = verbose
 
     if verbose:

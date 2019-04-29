@@ -10,6 +10,7 @@ Global Variables convention:
 '''
 
 Debug = False
+Silent = False
 
 BaseURL = ''
 
