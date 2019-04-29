@@ -2,9 +2,12 @@
 
 import os
 import sys
-from pprint import pprint
+import pprint
 from bluecat_am import config
 from bluecat_am import api
+
+Pp = pprint.PrettyPrinter(indent=4, width=60, compact=True)
+
 
 '''Higher Level Utility BAM API Functions'''
 
@@ -81,13 +84,13 @@ def bam_init():
     config_ent = api.get_entity_by_name(config.RootId, config.ConfigName, 'Configuration')
     if config.Debug:
         print('{} Config Entity:'.format(fn))
-        pprint(config_ent, indent=4)
+        Pp.pprint(config_ent)
     config.ConfigId = config_ent['id']
     if config.ConfigId > 0:
         view_ent = api.get_entity_by_name(config.ConfigId, config.ViewName, 'View')
         if config.Debug:
             print('{} View Entity:'.format(fn))
-            pprint(view_ent, indent=4)
+            Pp.pprint(view_ent)
         config.ViewId = view_ent['id']
     else:
         bam_error('Error: The parent (Configuration) Id must be set before setting the View Id')
@@ -128,7 +131,7 @@ def get_info_by_name(fqdn):
         ent = api.get_entity_by_name(obj_id, name, 'Entity')
         if config.Debug:
             print('{} name: {} entity:'.format(fn, name))
-            pprint(ent, indent=4)
+            Pp.pprint(ent)
         pid = obj_id
         obj_id = ent['id']
     ent['pid'] = pid
@@ -144,12 +147,13 @@ def get_info_by_name(fqdn):
         ents = api.get_entities(pid, obj_type, 0, 50)
         if config.Debug:
             if type(ents) is str:
-                print('{} Type: {} Ent: {}'.format(fn, obj_type, ents))
+                print('{} Type: {} Ent:'.format(fn, obj_type))
+                Pp.pprint(ents)
             else:
                 for e in ents:
                     if e['name'] == name:
                         print('{} Type: {} Ent:'.format(fn, obj_type))
-                        pprint(e, indent=4)
+                        Pp.pprint(e)
     if config.Debug:
         print()
     return ent
@@ -178,7 +182,7 @@ def view_info_by_name(fqdn, *argv):
         ent = api.get_entity_by_name(obj_id, name, 'Entity')
         if config.Debug:
             print('{} name: {} entity:'.format(fn, name))
-            pprint(ent, indent=4)
+            Pp.pprint(ent)
         pid = obj_id
         obj_id = ent['id']
     ent['pid'] = pid
@@ -350,7 +354,8 @@ def view_rr(fqdn, *argv):
     ids = find_rr(fqdn, *argv)
     if is_zone(fqdn):
         obj = get_soa_info(fqdn)
-        print(obj)
+        if not config.Silent:
+            print(obj)
     bind_print(ids)
 
 #
@@ -422,7 +427,7 @@ def object_find(fqdn, rr_type, value):
         obj_ent = api.get_entity_by_id(obj_id)
         if config.Debug:
             print('{} name: {} id: {} ent:'.format(fn,name,obj_id))
-            pprint(ent, indent=4)
+            Pp.pprint(ent)
         if len(names) == 0 and obj_id:
             obj_type = obj_ent['type']
             if obj_type == 'Zone':
@@ -470,28 +475,6 @@ def get_pid_by_name(fqdn):
     info = get_info_by_name(fqdn)
     return info['pid']
 
-#
-# gets an entity based on fqdn
-#
-
-def get_host_info(vid, fqdn):
-    names = fqdn.split('.')
-    lg = len(names)
-    igd = vid
-    for name in names[::-1]:
-        ent = api.get_entity_by_name(id, name, 'Entity')
-        if ent['type'] == 'Zone':
-            id = ent['id']
-            print(names[:l])
-            lg -= 1
-        else:
-            break
-    name = '.'.join(names[:l])
-    ent = api.get_entity_by_name(id, name, 'GenericRecord')
-    return ent
-
-
-    
 #
 # retrieves the Id of a Zone or Subzone
 #
@@ -558,7 +541,7 @@ def is_host_record(fqdn):
     ent = get_info_by_name(fqdn)
     if config.Debug:
         print('{} ent: {}'.format(fn))
-        pprint(ent, indent=4)
+        Pp.pprint(ent)
     if ent['id'] > 0 and ent['type'] == 'HostRecord':
         return True
     else:
@@ -584,7 +567,8 @@ def add_external_host(exhost):
     exhosts = get_external_hosts()
     if exhost not in exhosts:
         val = api.add_ExternalHost_Record(config.ViewId, exhost, 'comments=Ext. Host|')
-        print(val)
+        if not Silent:
+            print(val)
 
 #
 # delete a given generic RR
@@ -607,7 +591,8 @@ def delete_rr(fqdn, rr_type, *argv):
     if config.Debug:
         print('{} obj_id: {}'.format(fn, obj_id))
     if obj_id:
-        print('This RR exists and will be deleted')
+        if not config.Silent:
+            print('This RR exists and will be deleted')
         if rr_type == 'A':
             obj_prop_key = config.RRTypeMap[rr_type]['prop_key']
             ent = api.get_entity_by_id(obj_id[0])
@@ -639,18 +624,21 @@ def delete_rr(fqdn, rr_type, *argv):
 
 def add_rr(fqdn, rr_type, value, ttl):
     fn = 'add_rr'
+    # obj_ids is a list of ids
+    obj_ids = []
     if config.Debug:
-        print('{} Input data: {} {} {} {}'.format(fn, fqdn, rr_type, value, ttl))
+        print('{}, Input data: {} {} {} {}'.format(fn, fqdn, rr_type, value, ttl))
     obj_prop_key = config.RRTypeMap[rr_type]['prop_key']
-    obj_id = find_rr(fqdn, rr_type, value)
-    if obj_id:
+    obj_ids = find_rr(fqdn, rr_type, value)
+    if obj_ids:
         print('This {} Record already exists'.format(rr_type))
-        bind_print(obj_id)
-        return obj_id
+        if not config.Silent:
+            bind_print(obj_ids)
+        return obj_ids
     elif rr_type == 'A':
-        obj_id = find_rr(fqdn, rr_type)
-        if obj_id:
-            ent = api.get_entity_by_id(obj_id[0])
+        obj_ids = find_rr(fqdn, rr_type)
+        if obj_ids:
+            ent = api.get_entity_by_id(obj_ids[0])
             d = props2dict(ent['properties'])
             ip_list = d[obj_prop_key]
             ip_list += ',' + value
@@ -658,34 +646,40 @@ def add_rr(fqdn, rr_type, value, ttl):
             d['ttl'] = ttl
             ent['properties'] = dict2props(d)
             api.update(ent)
-            print('Added Host Record:')
-            bind_print(obj_id)
+            if not config.Silent:
+                print('Added Host Record:')
         else:
             # adding to the top level of the zone requires a leading dot
             if is_zone(fqdn):
                 fqdn = '.' + fqdn
-            obj_id = api.add_host_record(fqdn, value, ttl)
+            new_id = api.add_host_record(fqdn, value, ttl)
+            obj_ids = [new_id]
     elif rr_type == 'TXT':
         if is_zone(fqdn):
             fqdn = '.' + fqdn
-        obj_id = api.add_TXT_Record(fqdn, value, ttl)
+        new_id = api.add_TXT_Record(fqdn, value, ttl)
+        obj_ids = [new_id]
     elif rr_type == 'CNAME':
         if is_zone(fqdn):
             print('Cannot add a CNAME record at the top of a Zone')
-            return obj_id
+            return obj_ids
         else:
-            obj_id = api.add_Alias_Record(fqdn, value, ttl)
+            new_id = api.add_Alias_Record(fqdn, value, ttl)
+            obj_ids = [new_id]
     elif rr_type == 'MX':
         (mx_host, priority) = mx_parse(value)
         if is_zone(fqdn):
             fqdn = '.' + fqdn
-        obj_id = api.add_MX_Record(fqdn, priority, mx_host, ttl)
-    if type(obj_id) is not int:
-        print('Cannot add: {} of type {} Error: {}'.format(fqdn, rr_type, obj_id))
+        new_id = api.add_MX_Record(fqdn, priority, mx_host, ttl)
+        obj_ids = [new_id]
+
+    if type(obj_ids[0]) is not int:
+        print('Cannot add: {} of type {} Error: {}'.format(fqdn, rr_type, obj_ids))
     else:
-        print('added new {} record:'.format(rr_type))
-        bind_print([obj_id])
-    return obj_id
+        if not config.Silent:
+            print('added new {} record:'.format(rr_type))
+            bind_print(obj_ids)
+    return obj_ids
 
 #
 # update a given RR to the state of the values given
@@ -705,7 +699,7 @@ def update_rr(fqdn, rr_type, value, ttl):
     if config.Debug:
         print('{} fqdn {} rr_type {} value {}'.format(fn, fqdn, rr_type, value))
         print('{} ent bef:'.formt(fn))
-        pprint(ent, indent=4)
+        Pp.pprint(ent)
     prop_key = config.RRTypeMap[rr_type]['prop_key']
     d = props2dict(ent['properties'])
     d['ttl'] = ttl
@@ -734,7 +728,8 @@ def update_rr(fqdn, rr_type, value, ttl):
         ent['properties'] = dict2props(d)
     if config.Debug:
         print('{} ent aft:'.format(fn))
-        pprint(ent, indent=4)
+        Pp.pprint(ent)
     api.update(ent)
-    print('Updated RR as follows:')
-    bind_print([obj_id])
+    if not config.Silent:
+        print('Updated RR as follows:')
+        bind_print([obj_id])

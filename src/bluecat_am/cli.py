@@ -15,9 +15,11 @@ def validate_value(ctx, param, value):
 @click.command()
 
 @click.option(
+        '-s', '--silent', is_flag=True,
+        help='Minimize the output from commands. Silence is golden')
+@click.option(
         '-v', '--verbose', is_flag=True,
         help='Show what is going on for debugging purposes')
-
 @click.argument('action',
                 type=click.Choice(['view', 'add', 'delete', 'modify']),
                 required=True)
@@ -34,12 +36,13 @@ def validate_value(ctx, param, value):
 
 # Main programme
 
-def run(action, fqdn, rr_type, value, ttl, verbose):
+def run(action, fqdn, rr_type, value, ttl, silent, verbose):
     """ Command line interface to BAM DNS System\n
     Usage: bamcli action fqdn rr_type ttl value\n
     E.g.  $ add bozo.uoft.ca A 3600 10.10.10.1 [TTL]
     """
 
+    config.Silent = silent
     config.Debug = verbose
 
     if verbose:
