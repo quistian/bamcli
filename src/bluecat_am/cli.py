@@ -1,5 +1,6 @@
 import re
 import click
+
 from click import group, pass_context, option, argument
 from click import Context
 from bluecat_am import util, config
@@ -18,15 +19,33 @@ def validate_value(ctx, param, value):
 
 @group()
 @option(
-    '-s', '--silent', is_flag=True,
-    help='Minimize the output from commands. Silence is golden')
+    '-s', '--silent',
+    is_flag=True,
+    help='Minimize the output from commands. Silence is golden',
+)
 @option(
-    '-v', '--verbose',
+    '-v', '--verbose', '--debug', 'verbose',
     is_flag=True,
     help='Show what is going on for debugging purposes'
 )
+@option(
+        '-U', '--url',
+        envvar='BAM_API_URL',
+        help='Add URL on the command line',
+)
+@option(
+        '-u', '--user',
+        envvar='BAM_USER',
+        default='ralph',
+        help='Add Username on the command line',
+)
+@option(
+        '-p', '--pw', '--pass', 'password',
+        envvar='BAM_PW',
+        help='API password',
+)
 @pass_context
-def run(ctx: Context, silent, verbose):
+def run(ctx: Context, silent, verbose, url, user, password):
     """ Command line interface to BAM DNS System\n
     E.g.  $bamcli add bozo.uoft.ca A 3600 10.10.10.1 [TTL]
     """
@@ -38,9 +57,9 @@ def run(ctx: Context, silent, verbose):
 
     if verbose:
         click.echo('action: {}'.format(ctx.invoked_subcommand))
+        click.echo('URL: {} User: {} Pw: {}'.format(url, user, password))
 
-    util.bam_init()
-
+    util.bam_init(url, user, password)
 
 # Define common options to share between subcommands
 fqdn = argument(
@@ -67,7 +86,6 @@ ttl = argument(
     default='86400',
 )
 # @run commands: add, replace, delete, view, find
-
 
 @run.command()
 @pass_context
@@ -202,6 +220,6 @@ def find(ctx, fqdn, rr_type, value):
     print(ids)
 
 
-if __name__ == '__main__':
-    run(['add', 'alex.utoronto.ca', 'A', '10.128.30.40'])
-    pass
+if __name__ == '__run__':
+#   run(['add', 'alex.utoronto.ca', 'A', '10.128.30.40'])
+    run()

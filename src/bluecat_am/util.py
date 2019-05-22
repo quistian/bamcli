@@ -2,17 +2,22 @@
 
 import os
 import sys
-import pprint
+import logging
+
 from bluecat_am import config
 from bluecat_am import api
 
-Pp = pprint.PrettyPrinter(indent=4, width=60, compact=True)
+Logger = logging.getLogger(__name__)
+Logger.setLevel(logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
+
+config.Logger = Logger
 
 
 '''Higher Level Utility BAM API Functions'''
 
 def bam_error(err_str):
-    print('BAM error:', err_str)
+    Logger.debug('BAM error: {}', format(err_str))
     sys.exit()
 
 #
@@ -58,49 +63,62 @@ def props2dict(str):
     json: Session Token-> BAMAuthToken: 7NfY4MTU1NDM5MDU1MzkzMzppc2VhLWFwaQ== <- for User : test-api
 '''
 
-def bam_init():
+def bam_init(url, user, pw):
     fn = 'bam_init'
 #   config.ConfigName = 'Production'
 
-    config.BaseURL = os.getenv('BAM_API_URL')
-    if config.BaseURL is None:
-        bam_error('The BAM_API_URL shell variable must be set')
-    env_name = os.getenv('BAM_USER')
-    env_pw = os.getenv('BAM_PW')
-    if env_name is None or env_pw is None:
-        bam_error('The BAM_USER and BAM_PW shell variables must be set')
+    if api.url_ok(url):
+        config.BaseURL = url
+    else:
+        bam_error('Bad URL: {}'.format(url))
 
-    Creds = {'username': env_name, 'password': env_pw}
+    Creds = {'username': user, 'password': pw}
     session_token = api.login(Creds)
-
+    if not session_token:
+        bam_error('Bad Credentials')
+    if config.Debug:
+        Logger.debug('{}: Session Token Value: {}'.format(fn, session_token))
+        
     config.AuthHeader = {
-      'Authorization': 'BAMAuthToken: ' + session_token,
-      'Content-Type': 'application/json'
+        'Authorization': 'BAMAuthToken: ' + session_token,
+        'Content-Type': 'application/json'
     }
 
     if config.Debug:
-        print('{} Authorization Header: {}'.format(fn,config.AuthHeader))
+        Logger.debug('{}: Authorization Header: {}'.format(fn, config.AuthHeader))
 
     config_ent = api.get_entity_by_name(config.RootId, config.ConfigName, 'Configuration')
     if config.Debug:
-        print('{} Config Entity:'.format(fn))
-        Pp.pprint(config_ent)
+        Logger.debug('{}: Config Entity: {}'.format(fn, config_ent))
     config.ConfigId = config_ent['id']
     if config.ConfigId > 0:
         view_ent = api.get_entity_by_name(config.ConfigId, config.ViewName, 'View')
         if config.Debug:
-            print('{} View Entity:'.format(fn))
-            Pp.pprint(view_ent)
+            Logger.debug('{}: View Entity: {}'.format(fn, view_ent))
         config.ViewId = view_ent['id']
     else:
         bam_error('Error: The parent (Configuration) Id must be set before setting the View Id')
 
     if config.Debug:
         val = api.get_system_info()
-        vals = val.split('|')
-        for val in vals:
-            print(val)
-        print()
+        Logger.debug('{}: System Info: {}'.format(fn, val))
+
+        user_ent = api.get_entity_by_name(config.RootId, user, 'User')
+        Logger.debug('{}: User Ent: {}'.format(fn, user_ent))
+        user_id = user_ent['id']
+
+        ent = api.get_entity_by_id(user_id)
+        Logger.debug('{}: Ent Info: {}'.format(fn, ent))
+
+        right = api.get_access_right(user_id, user_id)
+        Logger.debug('{}: Entity Right {}'.format(fn, right))
+
+        rights = api.get_access_rights_for_entity(user_id, 0, 30)
+        Logger.debug('{}: Entity Rights: {}'.format(fn, rights))
+
+        rights = api.get_access_rights_for_user(user_id, 0, 30)
+        Logger.debug('{}: User Rights: {}'.format(fn, rights))
+
 
 
 def bam_logout():
@@ -130,8 +148,7 @@ def get_info_by_name(fqdn):
     for name in names[::-1]:
         ent = api.get_entity_by_name(obj_id, name, 'Entity')
         if config.Debug:
-            print('{} name: {} entity:'.format(fn, name))
-            Pp.pprint(ent)
+            Logger.debug('{} name: {} entity: {}'.format(fn, name, ent))
         pid = obj_id
         obj_id = ent['id']
     ent['pid'] = pid
@@ -143,17 +160,15 @@ def get_info_by_name(fqdn):
         name = fqdn.split('.')[0]
     for obj_type in config.RRObjectTypes:
         if config.Debug:
-            print('{} RR type: {}'.format(fn, obj_type))
+            Logger.debug('{} RR type: {}'.format(fn, obj_type))
         ents = api.get_entities(pid, obj_type, 0, 50)
         if config.Debug:
             if type(ents) is str:
-                print('{} Type: {} Ent:'.format(fn, obj_type))
-                Pp.pprint(ents)
+                Logger.debug('{} Type: {} Ent: {}'.format(fn, obj_type, ents))
             else:
                 for e in ents:
                     if e['name'] == name:
-                        print('{} Type: {} Ent:'.format(fn, obj_type))
-                        Pp.pprint(e)
+                        Logger.debug('{} Type: {} Ent: {}'.format(fn, obj_type, e))
     if config.Debug:
         print()
     return ent
@@ -164,9 +179,9 @@ def view_info_by_name(fqdn, *argv):
     is_Zone = False
     ll = len(argv)
     if config.Debug: 
-        print('{} fqdn: {}'.format(fn, fqdn))
+        Logger.debug('{} fqdn: {}'.format(fn, fqdn))
         for arg in argv:
-            print('arg: {}'.format(arg))
+            Logger.debug('arg: {}'.format(arg))
     if ll > 0:
         rr_type = argv[0]
         obj_rr_type = config.RRTypeMap[rr_type]['obj_type']
@@ -181,8 +196,7 @@ def view_info_by_name(fqdn, *argv):
     for name in names[::-1]:
         ent = api.get_entity_by_name(obj_id, name, 'Entity')
         if config.Debug:
-            print('{} name: {} entity:'.format(fn, name))
-            Pp.pprint(ent)
+            Logger.debug('{} name: {} entity: {}'.format(fn, name, ent))
         pid = obj_id
         obj_id = ent['id']
     ent['pid'] = pid
@@ -193,7 +207,7 @@ def view_info_by_name(fqdn, *argv):
     else:
         name = names[0]
     if config.Debug:
-        print()
+        Logger.debug()
     if ll == 0:
         ids = []
         for obj_type in config.RRObjectTypes:
@@ -237,31 +251,27 @@ def view_info_by_name(fqdn, *argv):
     return ent
 
 '''
-
  Find a RR based on more or less specificity by matching:
- a. fqdn
- b. fqdn + RRtype
- c. fqdn + RRtype + value
 
- Return an list of matching entities. If there are no matches, return an empty lists
+     a. fqdn
+     b. fqdn + RRtype
+     c. fqdn + RRtype + value
 
-
+ Return an list of matching entity IDs. If there are no matches, return an empty lists
 '''
 
 
 def find_rr(fqdn, *argv):
     """Given a fqdn and an RR type and optionally a value
-        return a list of entity IDs which match the given input
+       return a list of entity IDs which match the given input
     """
     fn = 'find_rr'
-    rr_type = None
-    value = None
-    obj_rr_key = None
-
+    rr_type = value = obj_rr_key = None
+    trailing_dot = False
     obj_types = config.RRObjectTypes
 
     if config.Debug:
-        print('{}: fqdn: {} argv: {}'.format(fn, fqdn, argv))
+        Logger.debug('{}: fqdn: {} argv: {}'.format(fn, fqdn, argv))
 
     arglen = len(argv)
     if arglen > 0:
@@ -274,23 +284,25 @@ def find_rr(fqdn, *argv):
     if fqdn[-1] == '.':
         trailing_dot = True
         fqdn = fqdn[:-1]
-    else:
-        trailing_dot = False
 
     if config.Debug:
-        print('{}: rr_type, value, obj_rr_key'.format(fn))
-        print('     {} {} {}'.format(rr_type, value, obj_rr_key))
+        Logger.debug('{}: rr_type: {}, rr_value: {}, obj_rr_key: {}'.format(fn,rr_type, value, obj_rr_key))
+
     names = fqdn.split('.')
     tld = names.pop()
     if tld not in config.LegalTLDs:
-        print('Top level domain name must be one of: {}'.format(config.LegalTLDs))
-    ent = api.get_entity_by_name(config.ViewId, tld, 'Entity')
-    par_id = ent['id']
+        Logger.debug('{}: Top level domain name must be one of: {}'.format(fn, config.LegalTLDs))
+    tld_ent = api.get_entity_by_name(config.ViewId, tld, 'Entity')
+    par_id = tld_ent['id']
+    if config.Debug:
+        Logger.debug('{}: TLD entity: {}'.format(fn, tld_ent))
 
     for name in names[::-1]:
         ent = api.get_entity_by_name(par_id, name, 'Entity')
         ent['pid'] = par_id
         par_id = ent['id']
+        if config.Debug:
+            Logger.debug('{}: entity: {}'.format(fn, ent))
     obj_id = ent['id']
     par_id = ent['pid']
     rr_ents = []
@@ -298,9 +310,9 @@ def find_rr(fqdn, *argv):
         par_id = obj_id
         name = ''
         for obj_type in obj_types:
-            if config.Debug:
-                print('{}: RR type: {}'.format(fn, obj_type))
             ents = api.get_entities(par_id, obj_type, 0, 100)
+            if config.Debug:
+                Logger.debug('{}: RR type: {} Entities: {}'.format(fn, obj_type, ents))
             if len(ents):
                 if trailing_dot:
                         rr_ents += ents
@@ -351,11 +363,12 @@ def find_rr(fqdn, *argv):
     return ids
 
 def view_rr(fqdn, *argv):
+    fn = 'view_rr'
     ids = find_rr(fqdn, *argv)
-    if is_zone(fqdn):
-        obj = get_soa_info(fqdn)
-        if not config.Silent:
-            print(obj)
+#    if is_zone(fqdn):
+#        obj = get_soa_info(fqdn)
+#        if not config.Silent:
+#            Logger.debug('SOA info: {}'.format(obj))
     bind_print(ids)
 
 #
@@ -394,6 +407,7 @@ def bind_print(ent_ids):
             for val in values:
                 print(fmt_str.format(fqdn, ttl, rr_type, val))
         elif rr_type == 'TXT':
+            value = '"' + value + '"'
             print(fmt_str.format(fqdn, ttl, rr_type, value))
         elif rr_type == 'MX':
             pri = d['priority']
@@ -426,8 +440,7 @@ def object_find(fqdn, rr_type, value):
         obj_id = ent['id']
         obj_ent = api.get_entity_by_id(obj_id)
         if config.Debug:
-            print('{} name: {} id: {} ent:'.format(fn,name,obj_id))
-            Pp.pprint(ent)
+            Logger.debug('{} name: {} id: {} ent: {}'.format(fn,name,obj_id,ent))
         if len(names) == 0 and obj_id:
             obj_type = obj_ent['type']
             if obj_type == 'Zone':
@@ -540,8 +553,7 @@ def is_host_record(fqdn):
     fn = 'is_host_record'
     ent = get_info_by_name(fqdn)
     if config.Debug:
-        print('{} ent: {}'.format(fn))
-        Pp.pprint(ent)
+        Logger.debug('{} ent: {}'.format(fn, ent))
     if ent['id'] > 0 and ent['type'] == 'HostRecord':
         return True
     else:
@@ -581,7 +593,7 @@ def delete_rr(fqdn, rr_type, *argv):
     else:
         value = '*'
     if config.Debug:
-        print('{} Input data: {} {} {}'.format(fn,fqdn, rr_type, value))
+        Logger.debug('{} Input data: {} {} {}'.format(fn,fqdn, rr_type, value))
 
 # there can only be one CNAME record for a FQDN so the value does not matter
     if rr_type == 'CNAME':
@@ -589,7 +601,7 @@ def delete_rr(fqdn, rr_type, *argv):
     else:
         obj_id = find_rr(fqdn, rr_type, value)
     if config.Debug:
-        print('{} obj_id: {}'.format(fn, obj_id))
+        Logger.debug('{} obj_id: {}'.format(fn, obj_id))
     if obj_id:
         if not config.Silent:
             print('This RR exists and will be deleted')
@@ -603,11 +615,11 @@ def delete_rr(fqdn, rr_type, *argv):
                 d[obj_prop_key] = ','.join(ip_list)
                 ent['properties'] = dict2props(d)
                 if config.Debug:
-                    print('before:')
+                    Logger.debug('before:')
                     bind_print(obj_id)
                 api.update(ent)
                 if config.Debug:
-                    print('after:')
+                    Logger.debug('after:')
                     bind_print(obj_id)
             else:
                 api.delete(obj_id[0])
@@ -627,7 +639,7 @@ def add_rr(fqdn, rr_type, value, ttl):
     # obj_ids is a list of ids
     obj_ids = []
     if config.Debug:
-        print('{}, Input data: {} {} {} {}'.format(fn, fqdn, rr_type, value, ttl))
+        Logger.debug('{}, Input data: {} {} {} {}'.format(fn, fqdn, rr_type, value, ttl))
     obj_prop_key = config.RRTypeMap[rr_type]['prop_key']
     obj_ids = find_rr(fqdn, rr_type, value)
     if obj_ids:
@@ -697,9 +709,8 @@ def update_rr(fqdn, rr_type, value, ttl):
     obj_id = id_list[0]
     ent = api.get_entity_by_id(obj_id)
     if config.Debug:
-        print('{} fqdn {} rr_type {} value {}'.format(fn, fqdn, rr_type, value))
-        print('{} ent bef:'.formt(fn))
-        Pp.pprint(ent)
+        Logger.debug('{} fqdn {} rr_type {} value {}'.format(fn, fqdn, rr_type, value))
+        Logger.debug('{} ent bef: {}'.formt(fn, ent))
     prop_key = config.RRTypeMap[rr_type]['prop_key']
     d = props2dict(ent['properties'])
     d['ttl'] = ttl
@@ -727,8 +738,7 @@ def update_rr(fqdn, rr_type, value, ttl):
         d[prop_key] = value
         ent['properties'] = dict2props(d)
     if config.Debug:
-        print('{} ent aft:'.format(fn))
-        Pp.pprint(ent)
+        Logger.debug('{} ent aft: {}'.format(fn, ent))
     api.update(ent)
     if not config.Silent:
         print('Updated RR as follows:')

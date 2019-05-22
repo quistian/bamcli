@@ -22,7 +22,6 @@ ViewId = 0
 
 RootId = 0
 
-
 LegalTLDs = ('ca', 'com', 'edu', 'org')
 
 AuthHeader = {}
@@ -33,7 +32,10 @@ ObjectTypes = (
         'View',
         'InternalRootZone',
         'ExternalHostRecord'
+        'User',
+        'UserGroup'
         'Zone',
+        'StartOfAuthority',
         'HostRecord',
         'AliasRecord',
         'MXRecord',
@@ -42,10 +44,9 @@ ObjectTypes = (
         'GenericRecord',
         'HINFORecord',
         'NAPTRRecord',
-        'StartOfAuthority',
 )
 
-RRObjectTypes = ObjectTypes[5:]
+RRObjectTypes = ObjectTypes[6:]
 
 RRTypeMap = {
         'MX': {'obj_type': 'MXRecord', 'prop_key': 'linkedRecordName'},
@@ -95,4 +96,3 @@ Categories = {
     'DHCPZones': 'DHCP_ZONES',
     'ServerGroup': 'SERVERGROUP',
 }
-

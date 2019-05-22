@@ -1,11 +1,12 @@
+#!/usr/bin/env python
+
 from click.testing import CliRunner
 from bluecat_am.cli import run
 
-
 VALID_IPS = ['10.128.0.10', '10.128.0.20', '10.128.0.30']
 INVALID_IP = '10.20.30.40'
-VALID_DOMAIN = 'alex.utoronto.ca'
-INVALID_DOMAIN = 'something.some.thing'
+Valid_Domains = ['yes.uoft.ca', 'no.uoft.ca']
+INVALID_DOMAINS = ['something.some.thing', 'bozo.uoft.ca']
 NONEXIST_DOMAIN = 'blah.alex.utoronto.ca'
 
 
@@ -15,10 +16,20 @@ def test_cli_command_group():
     cli = CliRunner()
     cmd = '--help'
     result = cli.invoke(run, cmd)
-    print("Ran 'bamcli {}'".format(cmd))
-    print("Got:")
+    print('Ran -> bamcli {}'.format(cmd))
+    print('Got:')
     print(result.stdout)
 
+
+def test_view_zones():
+    print()
+    cli = CliRunner()
+    for zone in Valid_Domains:
+        cmd = 'view {}'.format(zone)
+        result = cli.invoke(run, cmd)
+        print('Executed: bamcli {}'.format(cmd))
+        print('Output:')
+        print(result.stdout)
 
 def test_multiple_A_records():
     print()
@@ -93,3 +104,10 @@ def test_delete_non_existant_FQDN():
     print("Ran 'bamcli {}'".format(cmd))
     print("Got:")
     print(result.stdout)
+
+def main():
+    test_cli_command_group()
+    test_view_zones()
+
+if __name__ == '__main__':
+    main()

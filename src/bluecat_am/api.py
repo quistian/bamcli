@@ -425,7 +425,10 @@ def search_by_object_types(key, types, start=0, count=10):
         'count': count
     }
     req = requests.get(URL, headers=config.AuthHeader, params=params)
-    return req.json()
+    if req.status_code == requests.codes.ok:
+        return req.json()
+    else:
+        return None
 
 
 '''
@@ -1096,7 +1099,7 @@ Parameters:
 
 '''
 
-def get_zones_by_hint(containerid, options, start=0, count=1):
+def get_zones_by_hint(containerid, start=0, count=1, options='accessRight=VIEW'):
         URL = config.BaseURL + 'getZonesByHint'
         if count > 10:
             count = 10
@@ -1176,7 +1179,7 @@ def add_resource_record(fqdn, typ, rrdata, ttl=86400, props='comments=EmTee|'):
         'properties': props
     }
     if config.Debug:
-        print(params)
+        config.Logger(params)
     req = requests.post(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
@@ -1238,8 +1241,8 @@ def add_host_record(fqdn, ips, ttl=86400, properties='comments=EmTee|'):
       'properties': properties
     }
     if config.Debug:
-        print('fqdn', fqdn)
-        print('ips', ips)
+        config.Logger.debug('fqdn', fqdn)
+        config.Logger.debug('ips', ips)
 
     req = requests.post(URL, headers=config.AuthHeader, params=params)
     return req.json()
@@ -1479,9 +1482,10 @@ def get_system_info():
     else:
         bam_error(req.text)
 
-def get_configuration_setting(id, name):
+
+def get_configuration_setting(conf_id, name):
     URL = config.BaseURL + 'getConfigurationSetting'
-    params = {'configurationId': id, 'settingName': name}
+    params = {'configurationId': conf_id, 'settingName': name}
     req = requests.get(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
@@ -1491,8 +1495,142 @@ def login(creds):
     URL = config.BaseURL + 'login'
     req = requests.get(URL, params=creds)
     if config.Debug:
-        print('status code: {}'.format(req.status_code))
-        print('headers: {}'.format(req.headers))
-        print('text: {}'.format(req.text))
-        print('json: {}'.format(req.json()))
-    return req.text.split()[3]
+        config.Logger.debug('status code: {}'.format(req.status_code))
+        config.Logger.debug('headers: {}'.format(req.headers))
+        config.Logger.debug('text: {}'.format(req.text))
+        config.Logger.debug('json: {}'.format(req.json()))
+    if req.status_code == requests.codes.ok:
+        return req.json().split()[3]
+    else:
+        return False
+
+'''
+
+Get Access Right
+    Retrieves an access right for a specified object.
+
+Note:
+    If the full access right is set on the parent object, the
+    getAccessRight() method for the child object will retrieve the
+    full access right even if there is a hide override set for the
+    child object type. It is the caller’s responsibility to evaluate
+    the returned APIAccessRight’s value and overrides to determine
+    the effective access level for the child object.
+
+Output / Response
+    Returns the access right for the specified object.
+
+API Call:
+    APIAccessRight getAccessRight( long entityId, long userId )
+
+Parameter Description
+    entityId: The object ID of the entity to which the access right is assigned.
+    userId: The object ID of the user to whom the access right is applied.
+
+'''
+
+def get_access_right(entity_id, user_id):
+    URL = config.BaseURL + 'getAccessRight'
+    params = {'entityId': entity_id, 'userId': user_id}
+    req = requests.get(URL, headers=config.AuthHeader, params=params)
+    if req.status_code == requests.codes.ok:
+        return req.json()
+    else:
+        print('Bad Status Code: {}'.format(req.status_code))
+        return False
+
+'''
+
+Get Access Rights for Entity
+    Returns an array of access rights for entities.
+
+Output / Response
+    Returns an array of access right objects.
+
+API Call:
+    APIAccessRight[] getAccessRightsForEntity( long entityId,int start, int count )
+
+Parameter Description
+    entityId: The object ID of the entity whose access rights are returned.
+    start:    Indicates where in the list of child access right objects to start returning objects.
+              The list begins at an index of 0.
+    count:    The maximum number of access right child objects to return.
+
+'''
+
+def get_access_rights_for_entity(entity_id, start=0, count=10):
+    URL = config.BaseURL + 'getAccessRightsForEntity'
+    params = {'entityId': entity_id, 'start': start, 'count': count}
+    req = requests.get(URL, headers=config.AuthHeader, params=params)
+    if req.status_code == requests.codes.ok:
+        return req.json()
+    else:
+        print('Bad Status Code: {}'.format(req.status_code))
+        return False
+
+'''
+
+Get Access Rights for User
+    Returns an array of access rights for a specified user.
+
+Output / Response
+    Returns an array of access right objects.
+
+API Call:
+    APIAccessRight[] getAccessRightsForUser( long userId, int start, int count )
+
+Parameter Description
+    entityId: The object ID of the user whose access rights are returned.
+    start: Indicates where in the list of child access right objects to start returning objects.
+           The list begins at an index of 0.
+    count: The maximum number of access right child objects to return.
+
+'''
+
+def get_access_rights_for_user(user_id, start=0, count=10):
+    URL = config.BaseURL + 'getAccessRightsForUser'
+    params = {'entityId': user_id, 'start': start, 'count': count}
+    req = requests.get(URL, headers=config.AuthHeader, params=params)
+    if req.status_code == requests.codes.ok:
+        return req.json()
+    else:
+        if config.Debug:
+            config.Logger.debug('Request URL: {}'.format(req.url))
+            config.Logger.debug('Request Headers: {}'.format(req.headers))
+            config.Logger.debug('Request Status Code: {}'.format(req.status_code))
+        return False
+
+'''
+
+Looking for the following response from the probe to check
+on a correct URL:
+
+    HTTP Error: 401 Client Error: Unauthorized for url: https://proteus.utoronto.ca/Services/REST/v1
+    REST URL called: https://proteus.utoronto.ca/Services/REST/v1
+    REST status code: 401
+    REST encoding: None
+    REST response headers: {'Server': 'Jetty (Bluecat Networks)', 'Content-Length': '19'}
+    REST response: "UNAUTHORIZED USER"
+
+'''
+
+#  req.raise_for_status()
+# this is actually a HTTPerror
+
+def url_ok(url):
+    URL = url
+#`  req = requests.get(URL, timeout=2.5)
+    req = requests.get(URL)
+    if (req.status_code == 401 and req.text == '"UNAUTHORIZED USER"'):
+        return True
+    else:
+        return False
+
+'''
+    except requests.exceptions.ConnectionError as errc:
+        print('Connection Error: {}'.format(errc))
+    except requests.exceptions.Timeout as errt:
+        print('Timeout Error: {}'.format(errt))
+    except requests.exceptions.RequestException as errg:
+        print('Request Module Error: {}'.format(errg))
+'''
