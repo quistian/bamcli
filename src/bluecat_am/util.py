@@ -10,7 +10,6 @@ from bluecat_am import api
 Logger = logging.getLogger(__name__)
 Logger.setLevel(logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
-
 config.Logger = Logger
 
 
@@ -57,7 +56,63 @@ def props2dict(str):
         dd[kv[0]] = kv[1]
     return dd
 
+'''
+Get Access Rights For User: isea-api
+[
+{'entityId': 2209219, 'userId': 2522143, 'value': 'VIEW', 'overrides': 'DHCP4Range=FULL|IP4Address=FULL|', 'properties': 'deploymentAllowed=false|quickDeploymentAllowed=false|workflowLevel=NONE|'},
+{'entityId': 2206768, 'userId': 2522143, 'value': 'VIEW', 'overrides': 'DHCP4Range=FULL|IP4Address=FULL|', 'properties': 'deploymentAllowed=false|quickDeploymentAllowed=false|workflowLevel=NONE|'},
+{'entityId': 2206774, 'userId': 2522143, 'value': 'VIEW', 'overrides': 'IP4Address=FULL|DHCP4Range=FULL|', 'properties': 'deploymentAllowed=false|quickDeploymentAllowed=false|workflowLevel=NONE|'},
+{'entityId': 2206776, 'userId': 2522143, 'value': 'VIEW', 'overrides': 'DHCP4Range=FULL|IP4Address=FULL|', 'properties': 'deploymentAllowed=false|quickDeploymentAllowed=false|workflowLevel=NONE|'},
+{'entityId': 2206634, 'userId': 2522143, 'value': 'VIEW', 'overrides': 'DHCP4Range=FULL|IP4Address=FULL|', 'properties': 'deploymentAllowed=false|quickDeploymentAllowed=false|workflowLevel=NONE|'},
+{'entityId': 2521370, 'userId': 2522143, 'value': 'FULL', 'overrides': None, 'properties': 'deploymentAllowed=false|quickDeploymentAllowed=true|workflowLevel=NONE|'}
+]
 
+
+{'id': 2209219, 'name': 'esp-net', 'type': 'IP4Network', 'properties': 'CIDR=10.10.0.0/16|allowDuplicateHost=disable|inheritAllowDuplicateHost=true|pingBeforeAssign=disable|inheritPingBeforeAssign=true|locationInherited=true|gateway=10.10.0.1|inheritDefaultDomains=true|defaultView=2203565|inheritDefaultView=false|inheritDNSRestrictions=true|'}
+{'id': 2206768, 'name': 'mrf', 'type': 'IP4Network', 'properties': 'CIDR=128.100.100.0/24|allowDuplicateHost=disable|inheritAllowDuplicateHost=true|pingBeforeAssign=disable|inheritPingBeforeAssign=true|locationInherited=true|gateway=128.100.100.1|inheritDefaultDomains=true|defaultView=2203565|inheritDefaultView=false|inheritDNSRestrictions=true|'}
+{'id': 2206774, 'name': 'utcs', 'type': 'IP4Network', 'properties': 'CIDR=128.100.102.0/24|allowDuplicateHost=disable|inheritAllowDuplicateHost=true|pingBeforeAssign=disable|inheritPingBeforeAssign=true|locationInherited=true|gateway=128.100.102.1|inheritDefaultDomains=true|defaultView=2203565|inheritDefaultView=false|inheritDNSRestrictions=true|'}
+{'id': 2206776, 'name': 'its-bf', 'type': 'IP4Network', 'properties': 'CIDR=128.100.103.0/24|allowDuplicateHost=disable|inheritAllowDuplicateHost=true|pingBeforeAssign=disable|inheritPingBeforeAssign=true|locationInherited=true|gateway=128.100.103.1|inheritDefaultDomains=true|defaultView=2203565|inheritDefaultView=false|inheritDNSRestrictions=true|'}
+{'id': 2206634, 'name': 'teefy', 'type': 'IP4Network', 'properties': 'CIDR=128.100.62.0/25|allowDuplicateHost=disable|inheritAllowDuplicateHost=true|pingBeforeAssign=disable|inheritPingBeforeAssign=true|locationInherited=true|gateway=128.100.62.1|inheritDefaultDomains=true|defaultView=2203565|inheritDefaultView=false|inheritDNSRestrictions=true|'}
+{'id': 2521370, 'name': 'pete', 'type': 'Zone', 'properties': 'deployable=true|absoluteName=pete.utoronto.ca|'}
+
+'''
+
+def show_rights(uname):
+    fn = 'show_rights'
+    networks = []
+    zones = []
+    gebn_ent = api.get_entity_by_name(config.RootId, uname, 'User')
+    user_id = gebn_ent['id']
+    user_rights = api.get_access_rights_for_user(user_id, 0, 15)
+    if config.Debug:
+        Logger.debug('Get Ent By Name for {}: {}'.format(uname, gebn_ent))
+        Logger.debug('User name: {} User Id: {}'.format(uname, user_id))
+    for right in user_rights:
+        if config.Debug:
+            Logger.debug('Right: {}'.format(right))
+        ent_id = right['entityId']
+        par_ent = api.get_parent(ent_id)
+        par_id = par_ent['id']
+        for typ in ['IP4Network', 'Zone']:
+            ents = api.get_entities(par_id, typ, 0, 10)
+            for e in ents:
+                pairs = e['properties'].split('|')
+                pairs.remove('')
+                for pair in pairs:
+                    (name, val) = pair.split('=')
+                    if name == 'CIDR':
+                        if val not in networks:
+                            networks.append(val)
+                    elif name == 'absoluteName':
+                        if val not in zones:
+                            zones.append(val)
+    print('CIDR blocks:')
+    for net in networks:
+        print('    {}'.format(net))
+    print('Domains:')
+    for zone in zones:
+        print('    {}'.format(zone))
+        
 '''
     text: "Session Token-> BAMAuthToken: 7NfY4MTU1NDM5MDU1MzkzMzppc2VhLWFwaQ== <- for User : test-api"
     json: Session Token-> BAMAuthToken: 7NfY4MTU1NDM5MDU1MzkzMzppc2VhLWFwaQ== <- for User : test-api
@@ -100,25 +155,10 @@ def bam_init(url, user, pw):
         bam_error('Error: The parent (Configuration) Id must be set before setting the View Id')
 
     if config.Debug:
+        print()
         val = api.get_system_info()
         Logger.debug('{}: System Info: {}'.format(fn, val))
-
-        user_ent = api.get_entity_by_name(config.RootId, user, 'User')
-        Logger.debug('{}: User Ent: {}'.format(fn, user_ent))
-        user_id = user_ent['id']
-
-        ent = api.get_entity_by_id(user_id)
-        Logger.debug('{}: Ent Info: {}'.format(fn, ent))
-
-        right = api.get_access_right(user_id, user_id)
-        Logger.debug('{}: Entity Right {}'.format(fn, right))
-
-        rights = api.get_access_rights_for_entity(user_id, 0, 30)
-        Logger.debug('{}: Entity Rights: {}'.format(fn, rights))
-
-        rights = api.get_access_rights_for_user(user_id, 0, 30)
-        Logger.debug('{}: User Rights: {}'.format(fn, rights))
-
+        print()
 
 
 def bam_logout():
@@ -312,7 +352,10 @@ def find_rr(fqdn, *argv):
         for obj_type in obj_types:
             ents = api.get_entities(par_id, obj_type, 0, 100)
             if config.Debug:
-                Logger.debug('{}: RR type: {} Entities: {}'.format(fn, obj_type, ents))
+                if len(ents):
+                    Logger.debug('{}: RR type: {} Entities:'.format(fn, obj_type))
+                    for ent in ents:
+                        Logger.debug('   {}'.format(ent))
             if len(ents):
                 if trailing_dot:
                         rr_ents += ents

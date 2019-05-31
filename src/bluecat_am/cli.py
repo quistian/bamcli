@@ -7,10 +7,13 @@ from bluecat_am import util, config
 
 
 def validate_fqdn(ctx, param, value):
-    pattern = '[\w]+(\.[\w]+)+'
-    if not re.match(pattern, value):
-        raise click.BadParameter('Value must be in the form: hobo.utoronto.ca')
-    return value
+    if value == 'rights':
+        return validate_value(ctx, param, value)
+    else:
+        pattern = '[\w]+(\.[\w]+)+'
+        if not re.match(pattern, value):
+            raise click.BadParameter('Value must be in the form: hobo.utoronto.ca')
+        return value
 
 
 def validate_value(ctx, param, value):
@@ -47,17 +50,19 @@ def validate_value(ctx, param, value):
 @pass_context
 def run(ctx: Context, silent, verbose, url, user, password):
     """ Command line interface to BAM DNS System\n
-    E.g.  $bamcli add bozo.uoft.ca A 3600 10.10.10.1 [TTL]
+    E.g.  $bamcli add bozo.uoft.ca A 3600 10.10.10.1 [TTL]\n
+          $bamcli view bozo.uoft.ca\n
+          $bamcli view rights
     """
     ctx.obj = dict()
     ctx.obj['SILENT'] = silent
     ctx.obj['DEBUG'] = verbose
+    ctx.obj['USER'] = user
     config.Silent = silent
     config.Debug = verbose
 
     if verbose:
         click.echo('action: {}'.format(ctx.invoked_subcommand))
-        click.echo('URL: {} User: {} Pw: {}'.format(url, user, password))
 
     util.bam_init(url, user, password)
 
@@ -178,11 +183,13 @@ def remove(ctx, *args, **kwargs):
 @rr_type
 @value
 def view(ctx, fqdn, rr_type, value):
-    """View a Resource Record in the BlueCat DNS System"""
+    """View a Resource Record or Rights  in the BlueCat DNS System"""
     if ctx.obj['DEBUG']:
         click.echo('    fqdn: {} rr_type: {} value: {}\n'.format(fqdn, rr_type, value))
 
-    if rr_type == 'defRR':
+    if fqdn == 'rights':
+        util.show_rights(ctx.obj['USER'])
+    elif rr_type == 'defRR':
         util.view_rr(fqdn)
     elif value == 'defVAL':
         util.view_rr(fqdn, rr_type)

@@ -417,6 +417,7 @@ count: Maximum values to return. Default is 10
 
 
 def search_by_object_types(key, types, start=0, count=10):
+    fn = 'search_by_object_types'
     URL = config.BaseURL + 'searchByObjectTypes'
     params = {
         'keyword': key,
@@ -428,6 +429,8 @@ def search_by_object_types(key, types, start=0, count=10):
     if req.status_code == requests.codes.ok:
         return req.json()
     else:
+        if config.Debug:
+            config.Logger.debug('{}: Bad Request Status Code: {}'.format(fn, req.status_code))
         return None
 
 
@@ -1178,8 +1181,6 @@ def add_resource_record(fqdn, typ, rrdata, ttl=86400, props='comments=EmTee|'):
         'ttl': str(ttl),
         'properties': props
     }
-    if config.Debug:
-        config.Logger(params)
     req = requests.post(URL, headers=config.AuthHeader, params=params)
     return req.json()
 
@@ -1231,6 +1232,7 @@ Parameters:
 
 
 def add_host_record(fqdn, ips, ttl=86400, properties='comments=EmTee|'):
+    fn = 'add_host_record'
     URL = config.BaseURL + 'addHostRecord'
 
     params = {
@@ -1241,11 +1243,15 @@ def add_host_record(fqdn, ips, ttl=86400, properties='comments=EmTee|'):
       'properties': properties
     }
     if config.Debug:
-        config.Logger.debug('fqdn', fqdn)
-        config.Logger.debug('ips', ips)
-
+        config.Logger.debug('{}: fqdn: {} ips: {}'.format(fn, fqdn, ips))
     req = requests.post(URL, headers=config.AuthHeader, params=params)
-    return req.json()
+    if req.status_code == requests.codes.ok:
+        return req.json()
+    else:
+        if config.Debug:
+            config.Logger.debug('{}: status code: {}'.format(fn, req.status_code))
+            config.Logger.debug('{}: headers: {}'.format(fn, req.headers))
+        return False
 
 
 '''
@@ -1492,16 +1498,15 @@ def get_configuration_setting(conf_id, name):
 
 def login(creds):
     """Login to the Address Manager and return a session token"""
+    fn = 'login'
     URL = config.BaseURL + 'login'
     req = requests.get(URL, params=creds)
-    if config.Debug:
-        config.Logger.debug('status code: {}'.format(req.status_code))
-        config.Logger.debug('headers: {}'.format(req.headers))
-        config.Logger.debug('text: {}'.format(req.text))
-        config.Logger.debug('json: {}'.format(req.json()))
     if req.status_code == requests.codes.ok:
         return req.json().split()[3]
     else:
+        if config.Debug:
+            config.Logger.debug('{}: status code: {}'.format(fn, req.status_code))
+            config.Logger.debug('{}: headers: {}'.format(fn, req.headers))
         return False
 
 '''
@@ -1559,13 +1564,14 @@ Parameter Description
 '''
 
 def get_access_rights_for_entity(entity_id, start=0, count=10):
+    fn = 'get_access_rights_for_entity'
     URL = config.BaseURL + 'getAccessRightsForEntity'
     params = {'entityId': entity_id, 'start': start, 'count': count}
     req = requests.get(URL, headers=config.AuthHeader, params=params)
     if req.status_code == requests.codes.ok:
         return req.json()
     else:
-        print('Bad Status Code: {}'.format(req.status_code))
+        config.Logger.debug('{}: Bad Status Code: {}'.format(fn, req.status_code))
         return False
 
 '''
@@ -1588,17 +1594,18 @@ Parameter Description
 '''
 
 def get_access_rights_for_user(user_id, start=0, count=10):
+    fn = 'get_access_rights_for_user'
     URL = config.BaseURL + 'getAccessRightsForUser'
-    params = {'entityId': user_id, 'start': start, 'count': count}
+    params = {'userId': user_id, 'start': start, 'count': count}
     req = requests.get(URL, headers=config.AuthHeader, params=params)
     if req.status_code == requests.codes.ok:
         return req.json()
     else:
         if config.Debug:
-            config.Logger.debug('Request URL: {}'.format(req.url))
-            config.Logger.debug('Request Headers: {}'.format(req.headers))
-            config.Logger.debug('Request Status Code: {}'.format(req.status_code))
+            config.Logger.debug('{}: Request URL: {}'.format(fn, req.url))
+            config.Logger.debug('{}: Request Return Status Code: {}'.format(fn, req.status_code))
         return False
+
 
 '''
 
