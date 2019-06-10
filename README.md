@@ -21,7 +21,6 @@ $ . venv/bin/activate
 (venv) $ pip install --editable .
 ```
 
-
 Customize your Unix shell (this documentation assumes /bin/sh, /bin/bash or /bin/zsh) environment to set the BAM URL, Username and Password.
 
 ```bash
@@ -166,7 +165,7 @@ zip.bigcorp.ca  IN  3600 A  10.10.10.1
 Now we can VIEW the data we have added. To see the entire zone use the top level domain name followed by a dot. (The output is in BIND format).
 
 ```bash
-(venv) $ bamcli view zip.bigcorp.ca<b>.</b>
+(venv) $ bamcli view zip.bigcorp.ca.
 zip.bigcorp.ca       IN       A      10.10.1.1
 zip.bigcorp.ca       IN       MX     10 smtp.zip.bigcorp.ca
 blue.zip.bigcorp.ca  IN       A      10.10.10.10
@@ -192,6 +191,27 @@ To see all data of the same RR type the value can be dropped from the argument l
 blue.zip.bigcorp.ca       IN   A    10.10.10.10
 blue.zip.bigcorp.ca       IN   A    10.10.2.2
 ```
+
+### Viewing Rights
+
+To view all the zones and network address space that one
+has read and write access to use the word *rights* as the
+argument to the view command:
+
+
+```bash
+(venv) $ bamcli view rights
+CIDR blocks:
+    10.10.0.0/16
+    192.168.2.0/23
+    129.110.100.0/24
+    129.110.102.0/24
+    129.110.103.0/24
+    129.110.62.0/25
+Domains:
+    zip.bigcorp.ca
+```
+
 
 ### Deleting DNS data
 
