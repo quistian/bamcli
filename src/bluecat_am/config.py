@@ -1,18 +1,18 @@
-#/usr/bin/env python
+#!/usr/bin/env python
 
-'''
+"""
 
 Global Variables convention:
     * start with UpperCase
     * have no _ character
     * may have mid UpperCase words
 
-'''
+"""
 
 Debug = False
 Silent = False
 
-BaseURL = ''
+Baseurl = ''
 
 ConfigName = 'Test'
 ConfigId = 0

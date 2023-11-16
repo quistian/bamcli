@@ -1,8 +1,8 @@
-#/usr/bin/env python
+#!/usr/bin/env python
 
-import os
 import sys
 import logging
+import requests
 
 from bluecat_am import config
 from bluecat_am import api
@@ -15,6 +15,7 @@ config.Logger = Logger
 
 '''Higher Level Utility BAM API Functions'''
 
+
 def bam_error(err_str):
     Logger.debug('BAM error: {}', format(err_str))
     sys.exit()
@@ -23,6 +24,7 @@ def bam_error(err_str):
 # takes a mx_host and and optional priority
 # and returns a list of mx_host, priority
 #
+
 
 def mx_parse(value):
     sep = ':'
@@ -36,25 +38,30 @@ def mx_parse(value):
 # and returns it as a string equivalent:
 #   ttl=86400|absoluteName=fwsm-tabu.bkup.utoronto.ca|addresses=128.100.96.158|reverseRecord=true|
 
+
 def dict2props(d):
     props = []
-    for k,v in d.items():
-        props.append('='.join([k,v]))
+    for k, v in d.items():
+        props.append('='.join([k, v]))
     return '|'.join(props) + '|'
 
 
-# Takes a property list as a string e.g.
-#   ttl=86400|absoluteName=fwsm-tabu.bkup.utoronto.ca|addresses=128.100.96.158|reverseRecord=true|
-# and returns it as a dictionary equivalent:
-#   {'ttl': '86400', 'absoluteName': 'fwsm-tabu.bkup.utoronto.ca', 'addresses': '128.100.96.158', 'reverseRecord': 'true'}
+"""
+Takes a property list as a string e.g.
+   ttl=86400|absoluteName=fwsm-tabu.bkup.utoronto.ca|addresses=128.100.96.158|reverseRecord=true|
+ and returns it as a dictionary equivalent:
+{'ttl': '86400', 'absoluteName': 'fwsm-tabu.bkup.utoronto.ca', 'addresses': '128.100.96.158', 'reverseRecord': 'true'}
+"""
 
-def props2dict(str):
+
+def props2dict(string):
     dd = {}
-    ll = str.split('|')
+    ll = string.split('|')
     for i in ll[0:-1]:
         kv = i.split('=')
         dd[kv[0]] = kv[1]
     return dd
+
 
 '''
 Get Access Rights For User: isea-api
@@ -76,6 +83,7 @@ Get Access Rights For User: isea-api
 {'id': 2521370, 'name': 'pete', 'type': 'Zone', 'properties': 'deployable=true|absoluteName=pete.utoronto.ca|'}
 
 '''
+
 
 def show_rights(uname):
     fn = 'show_rights'
@@ -113,6 +121,7 @@ def show_rights(uname):
     for zone in zones:
         print('    {}'.format(zone))
         
+
 '''
     text: "Session Token-> BAMAuthToken: 7NfY4MTU1NDM5MDU1MzkzMzppc2VhLWFwaQ== <- for User : test-api"
     json: Session Token-> BAMAuthToken: 7NfY4MTU1NDM5MDU1MzkzMzppc2VhLWFwaQ== <- for User : test-api
@@ -123,7 +132,7 @@ def bam_init(url, user, pw):
 #   config.ConfigName = 'Production'
 
     if api.url_ok(url):
-        config.BaseURL = url
+        config.Baseurl = url
     else:
         bam_error('Bad URL: {}'.format(url))
 
@@ -162,8 +171,8 @@ def bam_init(url, user, pw):
 
 
 def bam_logout():
-    URL = config.BaseURL + 'logout'
-    req = requests.get(URL, headers=config.AuthHeader)
+    url = config.Baseurl + 'logout'
+    req = requests.get(url, headers=config.AuthHeader)
     sys.exit()
 
 
@@ -181,6 +190,8 @@ def delete_zone(fqdn):
 #
 
 def get_info_by_name(fqdn):
+    ent = dict()
+    pid = 0
     fn = 'get_info_by_name'
     obj_id = config.ViewId
     names = fqdn.split('.')
@@ -215,6 +226,10 @@ def get_info_by_name(fqdn):
 
 
 def view_info_by_name(fqdn, *argv):
+    value = None
+    obj_rr_key = None
+    ent = dict()
+    pid = None
     fn = 'view_info_by_name'
     is_Zone = False
     ll = len(argv)
@@ -290,6 +305,7 @@ def view_info_by_name(fqdn, *argv):
                         ids.append(e['id'])
     return ent
 
+
 '''
  Find a RR based on more or less specificity by matching:
 
@@ -305,6 +321,8 @@ def find_rr(fqdn, *argv):
     """Given a fqdn and an RR type and optionally a value
        return a list of entity IDs which match the given input
     """
+    name = None
+    ent = dict()
     fn = 'find_rr'
     rr_type = value = obj_rr_key = None
     trailing_dot = False
@@ -326,7 +344,7 @@ def find_rr(fqdn, *argv):
         fqdn = fqdn[:-1]
 
     if config.Debug:
-        Logger.debug('{}: rr_type: {}, rr_value: {}, obj_rr_key: {}'.format(fn,rr_type, value, obj_rr_key))
+        Logger.debug('{}: rr_type: {}, rr_value: {}, obj_rr_key: {}'.format(fn, rr_type, value, obj_rr_key))
 
     names = fqdn.split('.')
     tld = names.pop()
@@ -405,6 +423,7 @@ def find_rr(fqdn, *argv):
         print()
     return ids
 
+
 def view_rr(fqdn, *argv):
     fn = 'view_rr'
     ids = find_rr(fqdn, *argv)
@@ -417,6 +436,7 @@ def view_rr(fqdn, *argv):
 #
 # Print out a list of BAM RR Entity IDs in Bind format
 #
+
 
 def bind_print(ent_ids):
     if len(ent_ids) == 0:
@@ -463,27 +483,28 @@ def bind_print(ent_ids):
 # returns 0 if object can not be found
 #
 
+
 def object_find(fqdn, rr_type, value):
     fn = object_find
-    id = 0
+    pid = None
+    obj_id = None
     if rr_type == 'MX':
         (value, priority) = mx_parse(value)
 
-    obj_type = config.RRTypeMap[rr_type]['obj_type']
-    prop_key = config.RRTypeMap[rr_type]['prop_key']
+    # obj_type = config.RRTypeMap[rr_type]['obj_type']
+    # prop_key = config.RRTypeMap[rr_type]['prop_key']
 
     names = fqdn.split('.')
     tld = names.pop()
     tld_ent = api.get_entity_by_name(config.ViewId, tld, 'Zone')
     pid = tld_ent['id']
-    pname = tld
-    while (len(names)):
+    while len(names):
         name = names.pop()
         ent = api.get_entity_by_name(pid, name, 'Entity')
         obj_id = ent['id']
         obj_ent = api.get_entity_by_id(obj_id)
         if config.Debug:
-            Logger.debug('{} name: {} id: {} ent: {}'.format(fn,name,obj_id,ent))
+            Logger.debug('{} name: {} id: {} ent: {}'.format(fn, name, obj_id, ent))
         if len(names) == 0 and obj_id:
             obj_type = obj_ent['type']
             if obj_type == 'Zone':
@@ -499,7 +520,6 @@ def object_find(fqdn, rr_type, value):
                                     obj_id = ent['id']
                                 elif value == d[prop_key]:
                                     obj_id = ent['id']
-        pname = name
         pid = obj_id
     return obj_id
 
@@ -510,13 +530,13 @@ def get_id_by_name(fqdn):
 
 
 # not used
-def get_pid_by_id(id):
-    ent = api.get_parent(id)
+def get_pid_by_id(pid):
+    ent = api.get_parent(pid)
     return ent['id']
 
 
-def get_info_by_id(id):
-    ent = api.get_entity_by_id(id)
+def get_info_by_id(eid):
+    ent = api.get_entity_by_id(eid)
     pid = api.get_parent(ent['id'])
     ent['pid'] = pid
     return ent
@@ -535,6 +555,7 @@ def get_pid_by_name(fqdn):
 # retrieves the Id of a Zone or Subzone
 #
 
+
 def get_zone_id(fqdn):
     info = get_info_by_name(fqdn)
     if info['type'] == 'Zone':
@@ -546,6 +567,7 @@ def get_zone_id(fqdn):
 # gets SOA record for a give zone
 #
 
+
 def get_soa_info(fqdn):
     zid = get_zone_id(fqdn)
     pid = get_pid_by_id(zid)
@@ -556,6 +578,7 @@ def get_soa_info(fqdn):
 # is_zone takes a name/fqdn as input and returns: False
 # if it is not a zone, otherwise the object_Id of the zone
 #
+
 
 def is_zone(fqdn):
     ent = get_info_by_name(fqdn)
@@ -569,6 +592,7 @@ def is_zone(fqdn):
 # the specific add_zone() one
 #
     
+
 def add_zone_generic(fqdn):
     dot = '.'
     n = fqdn.split(dot)
@@ -582,8 +606,9 @@ def add_zone_generic(fqdn):
         'type': 'Zone',
         'properties': props
     }
-    val = add_entity(par_id, ent)
+    val = api.add_entity(par_id, ent)
     return val
+
 
 def is_external_host(fqdn):
     if fqdn in get_external_hosts():
@@ -603,13 +628,14 @@ def is_host_record(fqdn):
         return False
 
 
-def add_PTR_rr(fqdn, ipaddr, ttl=86400):
+def add_ptr_rr(fqdn, ipaddr, ttl=86400):
     macaddr = ''
     hostinfo = ''
     action = 'MAKE_STATIC'
     props = 'ptrs=' + str(config.ViewId) + ',' + fqdn
-    val = assign_IP4_Address(config.ConfigId, ipaddr, macaddr, hostinfo, action, props)
+    val = api.assign_ip4_address(config.ConfigId, ipaddr, macaddr, hostinfo, action, props)
     return val
+
 
 def get_external_hosts():
     exhosts = []
@@ -618,16 +644,18 @@ def get_external_hosts():
         exhosts.append(ent['name'])
     return exhosts
 
+
 def add_external_host(exhost):
     exhosts = get_external_hosts()
     if exhost not in exhosts:
-        val = api.add_ExternalHost_Record(config.ViewId, exhost, 'comments=Ext. Host|')
-        if not Silent:
+        val = api.add_externalhost_record(config.ViewId, exhost, 'comments=Ext. Host|')
+        if not config.Silent:
             print(val)
 
 #
 # delete a given generic RR
 #
+
 
 def delete_rr(fqdn, rr_type, *argv):
     fn = 'delete_rr'
@@ -636,7 +664,7 @@ def delete_rr(fqdn, rr_type, *argv):
     else:
         value = '*'
     if config.Debug:
-        Logger.debug('{} Input data: {} {} {}'.format(fn,fqdn, rr_type, value))
+        Logger.debug('{} Input data: {} {} {}'.format(fn, fqdn, rr_type, value))
 
 # there can only be one CNAME record for a FQDN so the value does not matter
     if rr_type == 'CNAME':
@@ -669,7 +697,7 @@ def delete_rr(fqdn, rr_type, *argv):
         else:
             api.delete(obj_id[0])
     else:
-        print('No RR exists matching {} {} {}'.format(fqdn,rr_type,value))
+        print('No RR exists matching {} {} {}'.format(fqdn, rr_type, value))
 
 
 #
@@ -712,20 +740,20 @@ def add_rr(fqdn, rr_type, value, ttl):
     elif rr_type == 'TXT':
         if is_zone(fqdn):
             fqdn = '.' + fqdn
-        new_id = api.add_TXT_Record(fqdn, value, ttl)
+        new_id = api.add_txt_record(fqdn, value, ttl)
         obj_ids = [new_id]
     elif rr_type == 'CNAME':
         if is_zone(fqdn):
             print('Cannot add a CNAME record at the top of a Zone')
             return obj_ids
         else:
-            new_id = api.add_Alias_Record(fqdn, value, ttl)
+            new_id = api.add_alias_record(fqdn, value, ttl)
             obj_ids = [new_id]
     elif rr_type == 'MX':
         (mx_host, priority) = mx_parse(value)
         if is_zone(fqdn):
             fqdn = '.' + fqdn
-        new_id = api.add_MX_Record(fqdn, priority, mx_host, ttl)
+        new_id = api.add_mx_record(fqdn, priority, mx_host, ttl)
         obj_ids = [new_id]
 
     if type(obj_ids[0]) is not int:
@@ -741,6 +769,7 @@ def add_rr(fqdn, rr_type, value, ttl):
 # Using find_rr
 #
 
+
 def update_rr(fqdn, rr_type, value, ttl):
     fn = 'update_rr'
     id_list = find_rr(fqdn, rr_type)
@@ -753,11 +782,11 @@ def update_rr(fqdn, rr_type, value, ttl):
     ent = api.get_entity_by_id(obj_id)
     if config.Debug:
         Logger.debug('{} fqdn {} rr_type {} value {}'.format(fn, fqdn, rr_type, value))
-        Logger.debug('{} ent bef: {}'.formt(fn, ent))
+        Logger.debug('{} ent bef: {}'.format(fn, ent))
     prop_key = config.RRTypeMap[rr_type]['prop_key']
     d = props2dict(ent['properties'])
     d['ttl'] = ttl
-    if rr_type ==  'MX':
+    if rr_type == 'MX':
         (pri, mx) = value.split(',')
         d[prop_key] = mx
         d['priority'] = pri

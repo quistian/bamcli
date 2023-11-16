@@ -3,34 +3,26 @@
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 
 
-'''
+"""
 
 RESTful Python API for BAM
 REST WADL: https://proteus.utoronto.ca/Services/REST/application.wadl
 
 From JumpStart to BAM
-User Group Webinar - Making APIs Work for You - Episode 1
 
+User Group Webinar - Making APIs Work for You - Episode 1
 - Web Layer and API Layer
 
-	Connect -> Login -> API Calls -> Logout
-
-	SOAP one session, and then at end closes
-
-	REST single shot sessions as request and responses
-
-	URLs contain action verbs: Service, Create, Read, Update, Delete
-
-	API account is the same as a normal user account (hybrid as well)
+    Connect -> Login -> API Calls -> Logout
+    SOAP one session, and then at end closes
+    REST single shot sessions as request and responses
+    urls contain action verbs: Service, Create, Read, Update, Delete
+    API account is the same as a normal user account (hybrid as well)
 
 - Logs -> /var/log/Server.log
-
 - API calls are small unit operations each with custom input and output
-
 - To send NULL values use e.g. var = ''
-
 - BAM v8.1.0 and present support REST
-
 - Sequence of steps for the REST API to e.g. add a host record to bozo.utoronto.ca
 
     a. Get the REST onetime Token, add it to the https Header
@@ -38,14 +30,11 @@ User Group Webinar - Making APIs Work for You - Episode 1
     c. Get the Parent View object by name
     d. Get the Parent Zone object by name, using the fqdn (i.e. utoronto.ca)
 
+"""
 
-'''
-
-import sys
-import json
 import requests
 
-from bluecat_am import config
+from bluecat_am import config, util
 
 '''
 
@@ -67,7 +56,6 @@ See the BAM API Guide, Chapter 4
 
 '''
 
-
 '''
 Get Entity by Name
 
@@ -86,12 +74,12 @@ Parameter Description
 '''
 
 
-def get_entity_by_name(id, name, type):
-    URL = config.BaseURL + 'getEntityByName'
-    params = {'parentId': id, 'name': name, 'type': type}
-    req = requests.get(URL, headers=config.AuthHeader, params=params)
+def get_entity_by_name(eid, name, typ):
+    url = config.Baseurl + 'getEntityByName'
+    params = {'parentId': eid, 'name': name, 'type': typ}
+    req = requests.get(url, headers=config.AuthHeader, params=params)
     return req.json()
-    
+
 
 '''
 
@@ -118,9 +106,9 @@ Returns E.g.
 
 
 def get_entity_by_id(entityid):
-    URL = config.BaseURL + 'getEntityById'
+    url = config.Baseurl + 'getEntityById'
     params = {'id': str(entityid)}
-    req = requests.get(URL, headers=config.AuthHeader, params=params)
+    req = requests.get(url, headers=config.AuthHeader, params=params)
     return req.json()
 
 
@@ -160,10 +148,10 @@ Returns a list of branch items given the root one level up
 '''
 
 
-def get_entities(parentid, type, start=0, count=10):
-    URL = config.BaseURL + 'getEntities'
-    params = {'parentId': parentid, 'type': type, 'start': start, 'count': count}
-    req = requests.get(URL, headers=config.AuthHeader, params=params)
+def get_entities(parentid, typ, start=0, count=10):
+    url = config.Baseurl + 'getEntities'
+    params = {'parentId': parentid, 'type': typ, 'start': start, 'count': count}
+    req = requests.get(url, headers=config.AuthHeader, params=params)
     return req.json()
 
 
@@ -190,9 +178,9 @@ E.g. parent object:
 
 
 def get_parent(childid):
-    URL = config.BaseURL + 'getParent'
+    url = config.Baseurl + 'getParent'
     params = {'entityId': str(childid)}
-    req = requests.get(URL, headers=config.AuthHeader, params=params)
+    req = requests.get(url, headers=config.AuthHeader, params=params)
     return req.json()
 
 
@@ -331,16 +319,17 @@ The return is a list as follows
 
 '''
 
-def custom_search(filters, type, start=0, count=10):
-    URL = config.BaseURL + 'customSearch'
+
+def custom_search(filters, typ, start=0, count=10):
+    url = config.Baseurl + 'customSearch'
     params = {
-            'filters': filters,
-            'type': type,
-            'options': '',
-            'start': start,
-            'count': count,
+        'filters': filters,
+        'type': typ,
+        'options': '',
+        'start': start,
+        'count': count,
     }
-    req = requests.get(URL, headers=config.AuthHeader, params=params)
+    req = requests.get(url, headers=config.AuthHeader, params=params)
     return req.json()
 
 
@@ -373,8 +362,9 @@ Parameter Description:
 
 '''
 
+
 def search_by_category(key, category, start=0, count=10):
-    URL = config.BaseURL + 'searchByCategory'
+    url = config.Baseurl + 'searchByCategory'
 
     params = {
         'keyword': key,
@@ -383,7 +373,7 @@ def search_by_category(key, category, start=0, count=10):
         'count': count
     }
 
-    req = requests.get(URL, headers=config.AuthHeader, params=params)
+    req = requests.get(url, headers=config.AuthHeader, params=params)
     return req.json()
 
 
@@ -418,14 +408,14 @@ count: Maximum values to return. Default is 10
 
 def search_by_object_types(key, types, start=0, count=10):
     fn = 'search_by_object_types'
-    URL = config.BaseURL + 'searchByObjectTypes'
+    url = config.Baseurl + 'searchByObjectTypes'
     params = {
         'keyword': key,
         'types': types,
         'start': start,
         'count': count
     }
-    req = requests.get(URL, headers=config.AuthHeader, params=params)
+    req = requests.get(url, headers=config.AuthHeader, params=params)
     if req.status_code == requests.codes.ok:
         return req.json()
     else:
@@ -460,7 +450,7 @@ Parameter Description
 
 
 def get_entities_by_name(parentid, name, obj_type, start=0, count=10):
-    URL = config.BaseURL + 'getEntitiesByName'
+    url = config.Baseurl + 'getEntitiesByName'
     params = {
         'parentId': parentid,
         'name': name,
@@ -468,8 +458,9 @@ def get_entities_by_name(parentid, name, obj_type, start=0, count=10):
         'start': start,
         'count': count,
     }
-    req = requests.get(URL, headers=config.AuthHeader, params=params)
+    req = requests.get(url, headers=config.AuthHeader, params=params)
     return req.json()
+
 
 '''
 
@@ -505,18 +496,20 @@ Parameters:
 
 '''
 
+
 def get_entities_by_name_using_options(parentid, name, typ, options='false', start=0, count=10):
-    URL = config.BaseURL + 'getEntitiesByNameUsingOptions'
+    url = config.Baseurl + 'getEntitiesByNameUsingOptions'
     params = {
         'parentId': parentid,
         'name': name,
-        'type': type,
+        'type': typ,
         'start': start,
         'count': count,
         'options': options,
     }
-    req = requests.get(URL, headers=config.AuthHeader, params=params)
+    req = requests.get(url, headers=config.AuthHeader, params=params)
     return req.json()
+
 
 '''
 
@@ -541,15 +534,15 @@ Parameter Description
 
 '''
 
-def get_MAC_Address(confid, macaddr):
-    URL = config.BaseURL + 'getMACAddress'
+
+def get_mac_address(confid, macaddr):
+    url = config.Baseurl + 'getMACAddress'
     params = {
         'configurationId': confid,
         'macAddress': macaddr,
     }
-    req = requests.get(URL, headers=config.AuthHeader, params=params)
+    req = requests.get(url, headers=config.AuthHeader, params=params)
     return req.json()
-
 
 
 '''
@@ -574,9 +567,13 @@ entity: The actual API entity passed as an entire object that has its mutable
 
 '''
 
+
 def update(entity):
-    URL = config.BaseURL + 'update'
-    req = requests.put(URL, headers=config.AuthHeader, json=entity)
+    """ no useful return value """
+    url = config.Baseurl + 'update'
+    req = requests.put(url, headers=config.AuthHeader, json=entity)
+    return req
+
 
 '''
 
@@ -608,9 +605,10 @@ Parameter Description
 
 '''
 
-def update_with_options(ent, opts):
-    URL = config.BaseURL + 'updateWithOptions'
-    req = requests.put(URL, headers=config.AuthHeader, json=ent)
+
+def update_with_options(ent):
+    url = config.Baseurl + 'updateWithOptions'
+    req = requests.put(url, headers=config.AuthHeader, json=ent)
     return req.json()
 
 
@@ -641,11 +639,15 @@ Output / Response
 
 '''
 
+
 def delete(obj_id):
-    URL = config.BaseURL + 'delete'
+    """ does not return a useful value """
+    url = config.Baseurl + 'delete'
     param = {'objectId': obj_id}
-    req = requests.delete(URL, headers=config.AuthHeader, params=param)
-    
+    req = requests.delete(url, headers=config.AuthHeader, params=param)
+    return req
+
+
 '''
 
 Delete with Options
@@ -657,15 +659,16 @@ Output / Response
     None.
 
 '''
-    
+
 
 def delete_with_options(obj_id, options):
-    URL = config.BaseURL + 'deleteWithOptions'
+    """ does not return a useful value """
+    url = config.Baseurl + 'deleteWithOptions'
     params = {
         'objectId': obj_id,
         'options': options
     }
-    req = requests.delete(URL, headers=config.AuthHeader, params=params)
+    requests.delete(url, headers=config.AuthHeader, params=params)
 
 
 '''
@@ -716,19 +719,21 @@ Parameter Description
 
 '''
 
+
 def get_linked_entities(entityid, obj_type, start=0, count=10):
-    URL = config.BaseURL + 'getLinkedEntities'
+    url = config.Baseurl + 'getLinkedEntities'
 
     params = {
-            'entityId': entityid,
-            'type': obj_type,
-            'start': start,
-            'count': count,
+        'entityId': entityid,
+        'type': obj_type,
+        'start': start,
+        'count': count,
     }
 
-    req = requests.get(URL, headers=config.AuthHeader, params=params)
+    req = requests.get(url, headers=config.AuthHeader, params=params)
     return req.json()
-    
+
+
 '''
 
 Link Entities
@@ -748,17 +753,19 @@ properties: Adds object properties, including user-defined fields.
 
 '''
 
-def link_entities(entity1id, entitity2id, properties):
-    URL = config.BaseURL + 'linkEntities'
-    
+
+def link_entities(entity1id, entity2id, properties):
+    url = config.Baseurl + 'linkEntities'
+
     params = {
         'entity1Id': entity1id,
         'entity2Id': entity2id,
         'properties': properties
     }
-    
-    req = requests.put(URL, headers=config.AuthHeader, params=params)
+
+    req = requests.put(url, headers=config.AuthHeader, params=params)
     return req.json()
+
 
 '''
 Unlink Entities
@@ -780,17 +787,18 @@ This method works on the following types of objects and links:
 '''
 
 
-def unlink_entities(entity1id, entitity2id, properties):
-    URL = config.BaseURL + 'unlinkEntities'
-    
+def unlink_entities(entity1id, entity2id, properties):
+    url = config.Baseurl + 'unlinkEntities'
+
     params = {
         'entity1Id': entity1id,
         'entity2Id': entity2id,
         'properties': properties
     }
-    
-    req = requests.put(URL, headers=config.AuthHeader, params=params)
+
+    req = requests.put(url, headers=config.AuthHeader, params=params)
     return req.json()
+
 
 '''
 
@@ -899,8 +907,9 @@ properties:
 
 '''
 
-def assign_IP4_Address(configid, ipaddr, macaddr, hostinfo, action, props):
-    URL = config.BaseURL + 'assignIP4Address'
+
+def assign_ip4_address(configid, ipaddr, macaddr, hostinfo, action, props):
+    url = config.Baseurl + 'assignIP4Address'
 
     params = {
         'configurationId': configid,
@@ -911,42 +920,43 @@ def assign_IP4_Address(configid, ipaddr, macaddr, hostinfo, action, props):
         'properties': props
     }
 
-    req = requests.post(URL, headers=config.AuthHeader, params=params)
+    req = requests.post(url, headers=config.AuthHeader, params=params)
     return req.json()
 
 
-def add_IP4_block_by_CIDR(parentid, cidr, properties):
-    URL = config.BaseURL + 'addIP4BlockByCIDR'
-    
+def add_ip4_block_by_cidr(parentid, cidr, properties):
+    url = config.Baseurl + 'addIP4BlockByCIDR'
+
     params = {
         'parentId': parentid,
         'CIDR': cidr,
         'properties': properties
     }
-    
-    req = requests.post(URL, headers=config.AuthHeader, params=params)
+
+    req = requests.post(url, headers=config.AuthHeader, params=params)
     return req.json()
 
 
 def get_ip4_address(ip):
-    URL = config.BaseURL + 'getIP4Address'
+    url = config.Baseurl + 'getIP4Address'
     params = {'containerId': config.ConfigId, 'address': ip}
-    req = requests.get(URL, headers=config.AuthHeader, params=params)
+    req = requests.get(url, headers=config.AuthHeader, params=params)
     return req.json()
+
 
 def get_ipranged_by_ip(ip):
-    URL = config.BaseURL + 'getIPRangedByIP'
+    url = config.Baseurl + 'getIPRangedByIP'
     params = {
-            'containerId': config.ConfigId,
-            'type': 'IP4Network',
-            'address': ip
+        'containerId': config.ConfigId,
+        'type': 'IP4Network',
+        'address': ip
     }
-    req = requests.get(URL, headers=config.AuthHeader, params=params)
+    req = requests.get(url, headers=config.AuthHeader, params=params)
     return req.json()
 
 
-def assign_ip4Address(config_id, ip_addr, mac_addr, host_info, action, props):
-    URL = config.BaseURL + 'assignIP4Address'
+def assign_ip4address(config_id, ip_addr, mac_addr, host_info, action, props):
+    url = config.Baseurl + 'assignIP4Address'
     params = {
         'configurationId': config_id,
         'ip4Address': ip_addr,
@@ -955,8 +965,9 @@ def assign_ip4Address(config_id, ip_addr, mac_addr, host_info, action, props):
         'action': action,
         'properties': props
     }
-    req = requests.post(URL, headers=config.AuthHeader, params=params)
+    req = requests.post(url, headers=config.AuthHeader, params=params)
     return req.json()
+
 
 '''
 
@@ -964,8 +975,9 @@ Low level functions to manipulate the IP address space
 
 '''
 
-def add_IP4_Network(bid, cidr, props):
-    URL = config.BaseURL + 'addIP4Network'
+
+def add_ip4_network(bid, cidr, props):
+    url = config.Baseurl + 'addIP4Network'
 
     params = {
         'blockId': bid,
@@ -973,8 +985,9 @@ def add_IP4_Network(bid, cidr, props):
         'properties': props
     }
 
-    req = resquests.post(URL, headers=config.AuthHeader, params=params)
+    req = requests.post(url, headers=config.AuthHeader, params=params)
     return req.json()
+
 
 '''
 
@@ -1010,11 +1023,12 @@ The entity has the following JSON structure:
  
 '''
 
+
 def add_entity(parent_id, entity):
-    URL = config.BaseURL + 'addEntity'
+    url = config.Baseurl + 'addEntity'
     params = {'parentId': parent_id}
 
-    req = requests.post(URL, headers=config.AuthHeader, params=params, json=entity)
+    req = requests.post(url, headers=config.AuthHeader, params=params, json=entity)
     return req.json()
 
 
@@ -1054,14 +1068,14 @@ deployable, set the deployable flag to true.
 
 
 def add_zone(parent_id, fqdn):
-    URL = config.BaseURL + 'addZone'
+    url = config.Baseurl + 'addZone'
     params = {
-            'parentId': parent_id,
-            'absoluteName': fqdn,
-            'properties': 'deployable=true',
+        'parentId': parent_id,
+        'absoluteName': fqdn,
+        'properties': 'deployable=true',
     }
 
-    req = requests.post(URL, headers=config.AuthHeader, params=params)
+    req = requests.post(url, headers=config.AuthHeader, params=params)
     return req.json()
 
 
@@ -1102,18 +1116,19 @@ Parameters:
 
 '''
 
+
 def get_zones_by_hint(containerid, start=0, count=1, options='accessRight=VIEW'):
-        URL = config.BaseURL + 'getZonesByHint'
-        if count > 10:
-            count = 10
-        params = {
-            'containerId': containerid,
-            'start': start,
-            'count': count,
-            'options': options
-        }
-        req = requests.get(URL, headers=config.AuthHeader, params=params)
-        return req.json()
+    url = config.Baseurl + 'getZonesByHint'
+    if count > 10:
+        count = 10
+    params = {
+        'containerId': containerid,
+        'start': start,
+        'count': count,
+        'options': options
+    }
+    req = requests.get(url, headers=config.AuthHeader, params=params)
+    return req.json()
 
 
 '''
@@ -1140,17 +1155,17 @@ Parameter Description:
 
 
 def add_zone_template(parent_id, name, properties):
-    URL = config.BaseURL + 'addZoneTemplate'
-    
+    url = config.Baseurl + 'addZoneTemplate'
+
     params = {
         'parentId': parent_id,
         'name': name,
         'properties': properties,
     }
-    
-    req = requests.post(URL, headers=config.AuthHeader, params=params)
+
+    req = requests.post(url, headers=config.AuthHeader, params=params)
     return req.json()
-    
+
 
 '''
 
@@ -1171,8 +1186,9 @@ rdata: Data for the RR in the BIND format
 
 '''
 
+
 def add_resource_record(fqdn, typ, rrdata, ttl=86400, props='comments=EmTee|'):
-    URL = config.BaseURL + 'addResourceRecord'
+    url = config.Baseurl + 'addResourceRecord'
     params = {
         'viewId': config.ViewId,
         'absoluteName': fqdn,
@@ -1181,7 +1197,7 @@ def add_resource_record(fqdn, typ, rrdata, ttl=86400, props='comments=EmTee|'):
         'ttl': str(ttl),
         'properties': props
     }
-    req = requests.post(URL, headers=config.AuthHeader, params=params)
+    req = requests.post(url, headers=config.AuthHeader, params=params)
     return req.json()
 
 
@@ -1233,18 +1249,18 @@ Parameters:
 
 def add_host_record(fqdn, ips, ttl=86400, properties='comments=EmTee|'):
     fn = 'add_host_record'
-    URL = config.BaseURL + 'addHostRecord'
+    url = config.Baseurl + 'addHostRecord'
 
     params = {
-      'viewId': config.ViewId,
-      'absoluteName': fqdn,
-      'addresses': ips,
-      'ttl': ttl,
-      'properties': properties
+        'viewId': config.ViewId,
+        'absoluteName': fqdn,
+        'addresses': ips,
+        'ttl': ttl,
+        'properties': properties
     }
     if config.Debug:
         config.Logger.debug('{}: fqdn: {} ips: {}'.format(fn, fqdn, ips))
-    req = requests.post(URL, headers=config.AuthHeader, params=params)
+    req = requests.post(url, headers=config.AuthHeader, params=params)
     if req.status_code == requests.codes.ok:
         return req.json()
     else:
@@ -1326,15 +1342,17 @@ Parameters:
 
 '''
 
+
 def get_host_records_by_hint(options, start=0, count=10):
-    URL = config.BaseURL + 'getHostRecordsByHint'
+    url = config.Baseurl + 'getHostRecordsByHint'
     params = {
-      'options': options,
-      'start': start,
-      'count': count,
+        'options': options,
+        'start': start,
+        'count': count,
     }
-    req = requests.get(URL, headers=config.AuthHeader, params=params)
+    req = requests.get(url, headers=config.AuthHeader, params=params)
     return req.json()
+
 
 # Editing specific types of Resource Records
 
@@ -1368,8 +1386,9 @@ properties:
 
 '''
 
-def add_TXT_Record(absname, txt, ttl=86400, props='comments=EmTee|'):
-    URL = config.BaseURL + 'addTXTRecord'
+
+def add_txt_record(absname, txt, ttl=86400, props='comments=EmTee|'):
+    url = config.Baseurl + 'addTXTRecord'
     params = {
         'viewId': config.ViewId,
         'absoluteName': absname,
@@ -1377,8 +1396,9 @@ def add_TXT_Record(absname, txt, ttl=86400, props='comments=EmTee|'):
         'ttl': ttl,
         'properties': props
     }
-    req = requests.post(URL, headers=config.AuthHeader, params=params)
+    req = requests.post(url, headers=config.AuthHeader, params=params)
     return req.json()
+
 
 '''
 
@@ -1400,8 +1420,9 @@ Output / Response
 
 '''
 
-def add_Generic_Record(viewid, absname, rr_type, rr_data, ttl, props):
-    URL = config.BaseURL + 'addGenericRecord'
+
+def add_generic_record(viewid, absname, rr_type, rr_data, ttl, props):
+    url = config.Baseurl + 'addGenericRecord'
     params = {
         'viewId': viewid,
         'absoluteName': absname,
@@ -1410,11 +1431,12 @@ def add_Generic_Record(viewid, absname, rr_type, rr_data, ttl, props):
         'ttl': ttl,
         'properties': props
     }
-    req = requests.post(URL, headers=config.AuthHeader, params=params)
+    req = requests.post(url, headers=config.AuthHeader, params=params)
     return req.json()
 
-def add_MX_Record(absname, priority, mx_host, ttl=86400, props='comments=EmTee|'):
-    URL = config.BaseURL + 'addMXRecord'
+
+def add_mx_record(absname, priority, mx_host, ttl=86400, props='comments=EmTee|'):
+    url = config.Baseurl + 'addMXRecord'
     params = {
         'viewId': config.ViewId,
         'absoluteName': absname,
@@ -1423,19 +1445,20 @@ def add_MX_Record(absname, priority, mx_host, ttl=86400, props='comments=EmTee|'
         'ttl': ttl,
         'properties': props
     }
-    req = requests.post(URL, headers=config.AuthHeader, params=params)
+    req = requests.post(url, headers=config.AuthHeader, params=params)
     return req.json()
 
 
-def add_ExternalHost_Record(viewid, ex_host, props):
-    URL = config.BaseURL + 'addExternalHostRecord'
+def add_externalhost_record(viewid, ex_host, props):
+    url = config.Baseurl + 'addExternalHostRecord'
     params = {
         'viewId': viewid,
         'name': ex_host,
         'properties': props
     }
-    req = requests.post(URL, headers=config.AuthHeader, params=params)
+    req = requests.post(url, headers=config.AuthHeader, params=params)
     return req.json()
+
 
 '''
 
@@ -1466,8 +1489,8 @@ Parameter Description
 '''
 
 
-def add_Alias_Record(absname, link, ttl=86400, props='comments=EmTee|'):
-    URL = config.BaseURL + 'addAliasRecord'
+def add_alias_record(absname, link, ttl=86400, props='comments=EmTee|'):
+    url = config.Baseurl + 'addAliasRecord'
     params = {
         'viewId': config.ViewId,
         'absoluteName': absname,
@@ -1475,32 +1498,31 @@ def add_Alias_Record(absname, link, ttl=86400, props='comments=EmTee|'):
         'ttl': ttl,
         'properties': props
     }
-    req = requests.post(URL, headers=config.AuthHeader, params=params)
+    req = requests.post(url, headers=config.AuthHeader, params=params)
     return req.json()
 
 
 def get_system_info():
-    URL = config.BaseURL + 'getSystemInfo'
-    req = requests.get(URL, headers=config.AuthHeader)
-    code = req.status_code
+    url = config.Baseurl + 'getSystemInfo'
+    req = requests.get(url, headers=config.AuthHeader)
     if req.status_code == 200:
         return req.json()
     else:
-        bam_error(req.text)
+        util.bam_error(req.text)
 
 
 def get_configuration_setting(conf_id, name):
-    URL = config.BaseURL + 'getConfigurationSetting'
+    url = config.Baseurl + 'getConfigurationSetting'
     params = {'configurationId': conf_id, 'settingName': name}
-    req = requests.get(URL, headers=config.AuthHeader, params=params)
+    req = requests.get(url, headers=config.AuthHeader, params=params)
     return req.json()
 
 
 def login(creds):
     """Login to the Address Manager and return a session token"""
     fn = 'login'
-    URL = config.BaseURL + 'login'
-    req = requests.get(URL, params=creds)
+    url = config.Baseurl + 'login'
+    req = requests.get(url, params=creds)
     if req.status_code == requests.codes.ok:
         return req.json().split()[3]
     else:
@@ -1508,6 +1530,7 @@ def login(creds):
             config.Logger.debug('{}: status code: {}'.format(fn, req.status_code))
             config.Logger.debug('{}: headers: {}'.format(fn, req.headers))
         return False
+
 
 '''
 
@@ -1534,15 +1557,17 @@ Parameter Description
 
 '''
 
+
 def get_access_right(entity_id, user_id):
-    URL = config.BaseURL + 'getAccessRight'
+    url = config.Baseurl + 'getAccessRight'
     params = {'entityId': entity_id, 'userId': user_id}
-    req = requests.get(URL, headers=config.AuthHeader, params=params)
+    req = requests.get(url, headers=config.AuthHeader, params=params)
     if req.status_code == requests.codes.ok:
         return req.json()
     else:
         print('Bad Status Code: {}'.format(req.status_code))
         return False
+
 
 '''
 
@@ -1563,16 +1588,18 @@ Parameter Description
 
 '''
 
+
 def get_access_rights_for_entity(entity_id, start=0, count=10):
     fn = 'get_access_rights_for_entity'
-    URL = config.BaseURL + 'getAccessRightsForEntity'
+    url = config.Baseurl + 'getAccessRightsForEntity'
     params = {'entityId': entity_id, 'start': start, 'count': count}
-    req = requests.get(URL, headers=config.AuthHeader, params=params)
+    req = requests.get(url, headers=config.AuthHeader, params=params)
     if req.status_code == requests.codes.ok:
         return req.json()
     else:
         config.Logger.debug('{}: Bad Status Code: {}'.format(fn, req.status_code))
         return False
+
 
 '''
 
@@ -1593,16 +1620,17 @@ Parameter Description
 
 '''
 
+
 def get_access_rights_for_user(user_id, start=0, count=10):
     fn = 'get_access_rights_for_user'
-    URL = config.BaseURL + 'getAccessRightsForUser'
+    url = config.Baseurl + 'getAccessRightsForUser'
     params = {'userId': user_id, 'start': start, 'count': count}
-    req = requests.get(URL, headers=config.AuthHeader, params=params)
+    req = requests.get(url, headers=config.AuthHeader, params=params)
     if req.status_code == requests.codes.ok:
         return req.json()
     else:
         if config.Debug:
-            config.Logger.debug('{}: Request URL: {}'.format(fn, req.url))
+            config.Logger.debug('{}: Request url: {}'.format(fn, req.url))
             config.Logger.debug('{}: Request Return Status Code: {}'.format(fn, req.status_code))
         return False
 
@@ -1610,10 +1638,10 @@ def get_access_rights_for_user(user_id, start=0, count=10):
 '''
 
 Looking for the following response from the probe to check
-on a correct URL:
+on a correct url:
 
     HTTP Error: 401 Client Error: Unauthorized for url: https://proteus.utoronto.ca/Services/REST/v1
-    REST URL called: https://proteus.utoronto.ca/Services/REST/v1
+    REST url called: https://proteus.utoronto.ca/Services/REST/v1
     REST status code: 401
     REST encoding: None
     REST response headers: {'Server': 'Jetty (Bluecat Networks)', 'Content-Length': '19'}
@@ -1621,17 +1649,19 @@ on a correct URL:
 
 '''
 
+
 #  req.raise_for_status()
 # this is actually a HTTPerror
 
 def url_ok(url):
-    URL = url
-#`  req = requests.get(URL, timeout=2.5)
-    req = requests.get(URL)
-    if (req.status_code == 401 and req.text == '"UNAUTHORIZED USER"'):
+    url = url
+    # `  req = requests.get(url, timeout=2.5)
+    req = requests.get(url)
+    if req.status_code == 401 and req.text == "UNAUTHORIZED USER":
         return True
     else:
         return False
+
 
 '''
     except requests.exceptions.ConnectionError as errc:
