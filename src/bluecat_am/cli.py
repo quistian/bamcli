@@ -16,8 +16,8 @@ def validate_fqdn(ctx, param, value):
         return value
 
 
-def validate_value(ctx, param, value):
-    return value
+def validate_value(ctx, param, val):
+    return val
 
 
 @group()
@@ -67,6 +67,8 @@ def run(ctx: Context, silent, verbose, url, user, password):
     util.bam_init(url, user, password)
 
 # Define common options to share between subcommands
+
+
 fqdn = argument(
     'fqdn',
     type=click.STRING,
@@ -92,16 +94,17 @@ ttl = argument(
 )
 # @run commands: add, replace, delete, view, find
 
+
 @run.command()
 @pass_context
 @fqdn
 @rr_type
 @value
 @ttl
-def add(ctx, fqdn, rr_type, value, ttl):
+def add(ctx, fq, rr_type, value, ttl):
     """Add a new Resource Record to the BlueCat DNS system"""
     if ctx.obj['DEBUG']:
-        click.echo('    fqdn: {} rr_type: {} value: {}\n'.format(fqdn, rr_type, value))
+        click.echo('    fqdn: {} rr_type: {} value: {}\n'.format(fq, rr_type, value))
 
     if rr_type == 'defRR' or value == 'defVAL':
         print('Not enough RR information given')
@@ -213,10 +216,10 @@ def list_rr(ctx, *args, **kwargs):
 @fqdn
 @rr_type
 @value
-def find(ctx, fqdn, rr_type, value):
+def find(ctx, fqdn, rr_typ, val):
     """Find a Resource Record in the BlueCat DNS System"""
     if ctx.obj['DEBUG']:
-        click.echo('    fqdn: {} rr_type: {} value: {}\n'.format(fqdn, rr_type, value))
+        click.echo('    fqdn: {} rr_type: {} value: {}\n'.format(fqdn, rr_typ, val))
 
     if rr_type == 'defRR':
         ids = util.find_rr(fqdn)
@@ -227,6 +230,6 @@ def find(ctx, fqdn, rr_type, value):
     print(ids)
 
 
+""" run(['add', 'alex.utoronto.ca', 'A', '10.128.30.40']) """
 if __name__ == '__run__':
-#   run(['add', 'alex.utoronto.ca', 'A', '10.128.30.40'])
     run()
