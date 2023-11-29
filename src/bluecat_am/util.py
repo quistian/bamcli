@@ -30,7 +30,7 @@ def mx_parse(value):
     if sep in value:
         return value.split(sep)
     else:
-        return (value, '10')
+        return value, '10'
 
 # Takes a property list as a dictionary e.g.
 # {'ttl': '86400', 'absoluteName': 'fwsm-tabu.bkup.utoronto.ca', 'addresses': '128.100.96.158', 'reverseRecord': 'true'}
@@ -65,20 +65,31 @@ def props2dict(string):
 '''
 Get Access Rights For User: isea-api
 [
-{'entityId': 2209219, 'userId': 2522143, 'value': 'VIEW', 'overrides': 'DHCP4Range=FULL|IP4Address=FULL|', 'properties': 'deploymentAllowed=false|quickDeploymentAllowed=false|workflowLevel=NONE|'},
-{'entityId': 2206768, 'userId': 2522143, 'value': 'VIEW', 'overrides': 'DHCP4Range=FULL|IP4Address=FULL|', 'properties': 'deploymentAllowed=false|quickDeploymentAllowed=false|workflowLevel=NONE|'},
-{'entityId': 2206774, 'userId': 2522143, 'value': 'VIEW', 'overrides': 'IP4Address=FULL|DHCP4Range=FULL|', 'properties': 'deploymentAllowed=false|quickDeploymentAllowed=false|workflowLevel=NONE|'},
-{'entityId': 2206776, 'userId': 2522143, 'value': 'VIEW', 'overrides': 'DHCP4Range=FULL|IP4Address=FULL|', 'properties': 'deploymentAllowed=false|quickDeploymentAllowed=false|workflowLevel=NONE|'},
-{'entityId': 2206634, 'userId': 2522143, 'value': 'VIEW', 'overrides': 'DHCP4Range=FULL|IP4Address=FULL|', 'properties': 'deploymentAllowed=false|quickDeploymentAllowed=false|workflowLevel=NONE|'},
-{'entityId': 2521370, 'userId': 2522143, 'value': 'FULL', 'overrides': None, 'properties': 'deploymentAllowed=false|quickDeploymentAllowed=true|workflowLevel=NONE|'}
+{'entityId': 2209219, 'userId': 2522143, 'value': 'VIEW', 'overrides': 'DHCP4Range=FULL|IP4Address=FULL|',
+'properties': 'deploymentAllowed=false|quickDeploymentAllowed=false|workflowLevel=NONE|'},
+{'entityId': 2206768, 'userId': 2522143, 'value': 'VIEW', 'overrides': 'DHCP4Range=FULL|IP4Address=FULL|',
+'properties': 'deploymentAllowed=false|quickDeploymentAllowed=false|workflowLevel=NONE|'},
+{'entityId': 2206774, 'userId': 2522143, 'value': 'VIEW', 'overrides': 'IP4Address=FULL|DHCP4Range=FULL|',
+'properties': 'deploymentAllowed=false|quickDeploymentAllowed=false|workflowLevel=NONE|'},
+{'entityId': 2206776, 'userId': 2522143, 'value': 'VIEW', 'overrides': 'DHCP4Range=FULL|IP4Address=FULL|',
+'properties': 'deploymentAllowed=false|quickDeploymentAllowed=false|workflowLevel=NONE|'},
+{'entityId': 2206634, 'userId': 2522143, 'value': 'VIEW', 'overrides': 'DHCP4Range=FULL|IP4Address=FULL|',
+'properties': 'deploymentAllowed=false|quickDeploymentAllowed=false|workflowLevel=NONE|'},
+{'entityId': 2521370, 'userId': 2522143, 'value': 'FULL', 'overrides': None,
+'properties': 'deploymentAllowed=false|quickDeploymentAllowed=true|workflowLevel=NONE|'}
 ]
 
 
-{'id': 2209219, 'name': 'esp-net', 'type': 'IP4Network', 'properties': 'CIDR=10.10.0.0/16|allowDuplicateHost=disable|inheritAllowDuplicateHost=true|pingBeforeAssign=disable|inheritPingBeforeAssign=true|locationInherited=true|gateway=10.10.0.1|inheritDefaultDomains=true|defaultView=2203565|inheritDefaultView=false|inheritDNSRestrictions=true|'}
-{'id': 2206768, 'name': 'mrf', 'type': 'IP4Network', 'properties': 'CIDR=128.100.100.0/24|allowDuplicateHost=disable|inheritAllowDuplicateHost=true|pingBeforeAssign=disable|inheritPingBeforeAssign=true|locationInherited=true|gateway=128.100.100.1|inheritDefaultDomains=true|defaultView=2203565|inheritDefaultView=false|inheritDNSRestrictions=true|'}
-{'id': 2206774, 'name': 'utcs', 'type': 'IP4Network', 'properties': 'CIDR=128.100.102.0/24|allowDuplicateHost=disable|inheritAllowDuplicateHost=true|pingBeforeAssign=disable|inheritPingBeforeAssign=true|locationInherited=true|gateway=128.100.102.1|inheritDefaultDomains=true|defaultView=2203565|inheritDefaultView=false|inheritDNSRestrictions=true|'}
-{'id': 2206776, 'name': 'its-bf', 'type': 'IP4Network', 'properties': 'CIDR=128.100.103.0/24|allowDuplicateHost=disable|inheritAllowDuplicateHost=true|pingBeforeAssign=disable|inheritPingBeforeAssign=true|locationInherited=true|gateway=128.100.103.1|inheritDefaultDomains=true|defaultView=2203565|inheritDefaultView=false|inheritDNSRestrictions=true|'}
-{'id': 2206634, 'name': 'teefy', 'type': 'IP4Network', 'properties': 'CIDR=128.100.62.0/25|allowDuplicateHost=disable|inheritAllowDuplicateHost=true|pingBeforeAssign=disable|inheritPingBeforeAssign=true|locationInherited=true|gateway=128.100.62.1|inheritDefaultDomains=true|defaultView=2203565|inheritDefaultView=false|inheritDNSRestrictions=true|'}
+{'id': 2209219, 'name': 'esp-net', 'type': 'IP4Network',
+'properties': 'CIDR=10.10.0.0/16|allowDuplicateHost=disable|inheritAllowDuplicateHost=true|pingBeforeAssign=disable|inheritPingBeforeAssign=true|locationInherited=true|gateway=10.10.0.1|inheritDefaultDomains=true|defaultView=2203565|inheritDefaultView=false|inheritDNSRestrictions=true|'}
+{'id': 2206768, 'name': 'mrf', 'type': 'IP4Network',
+'properties': 'CIDR=128.100.100.0/24|allowDuplicateHost=disable|inheritAllowDuplicateHost=true|pingBeforeAssign=disable|inheritPingBeforeAssign=true|locationInherited=true|gateway=128.100.100.1|inheritDefaultDomains=true|defaultView=2203565|inheritDefaultView=false|inheritDNSRestrictions=true|'}
+{'id': 2206774, 'name': 'utcs', 'type': 'IP4Network',
+'properties': 'CIDR=128.100.102.0/24|allowDuplicateHost=disable|inheritAllowDuplicateHost=true|pingBeforeAssign=disable|inheritPingBeforeAssign=true|locationInherited=true|gateway=128.100.102.1|inheritDefaultDomains=true|defaultView=2203565|inheritDefaultView=false|inheritDNSRestrictions=true|'}
+{'id': 2206776, 'name': 'its-bf', 'type': 'IP4Network',
+'properties': 'CIDR=128.100.103.0/24|allowDuplicateHost=disable|inheritAllowDuplicateHost=true|pingBeforeAssign=disable|inheritPingBeforeAssign=true|locationInherited=true|gateway=128.100.103.1|inheritDefaultDomains=true|defaultView=2203565|inheritDefaultView=false|inheritDNSRestrictions=true|'}
+{'id': 2206634, 'name': 'teefy', 'type': 'IP4Network',
+'properties': 'CIDR=128.100.62.0/25|allowDuplicateHost=disable|inheritAllowDuplicateHost=true|pingBeforeAssign=disable|inheritPingBeforeAssign=true|locationInherited=true|gateway=128.100.62.1|inheritDefaultDomains=true|defaultView=2203565|inheritDefaultView=false|inheritDNSRestrictions=true|'}
 {'id': 2521370, 'name': 'pete', 'type': 'Zone', 'properties': 'deployable=true|absoluteName=pete.utoronto.ca|'}
 
 '''
@@ -126,6 +137,7 @@ def show_rights(uname):
     json: Session Token-> BAMAuthToken: 7NfY4MTU1NDM5MDU1MzkzMzppc2VhLWFwaQ== <- for User : test-api
 '''
 
+
 def bam_init(url, user, pw):
     fn = 'bam_init'
 #   config.ConfigName = 'Production'
@@ -135,8 +147,8 @@ def bam_init(url, user, pw):
     else:
         bam_error('Bad URL: {}'.format(url))
 
-    Creds = {'username': user, 'password': pw}
-    session_token = api.login(Creds)
+    creds = {'username': user, 'password': pw}
+    session_token = api.login(creds)
     if not session_token:
         bam_error('Bad Credentials')
     if config.Debug:
@@ -171,7 +183,7 @@ def bam_init(url, user, pw):
 
 def bam_logout():
     url = config.Baseurl + 'logout'
-    req = requests.get(url, headers=config.AuthHeader)
+    requests.get(url, headers=config.AuthHeader)
     sys.exit()
 
 
@@ -187,6 +199,7 @@ def delete_zone(fqdn):
 # Get the information of an Entity (Id and parentId) given a FQDN or a CIDR block
 # Quick and dirty technique, based only on the fqdn
 #
+
 
 def get_info_by_name(fqdn):
     ent = dict()
@@ -230,7 +243,7 @@ def view_info_by_name(fqdn, *argv):
     ent = dict()
     pid = None
     fn = 'view_info_by_name'
-    is_Zone = False
+    is_zone = False
     ll = len(argv)
     if config.Debug: 
         Logger.debug('{} fqdn: {}'.format(fn, fqdn))
@@ -255,7 +268,7 @@ def view_info_by_name(fqdn, *argv):
         obj_id = ent['id']
     ent['pid'] = pid
     if ent['type'] == 'Zone':
-        is_Zone = True
+        is_zone = True
         pid = ent['id']
         name = ''
     else:
@@ -270,7 +283,7 @@ def view_info_by_name(fqdn, *argv):
                 if e['name'] == name:
                     ids.append(e['id'])
         bind_print(ids)
-        if is_Zone:
+        if is_zone:
             rrs = {}
             for obj_type in config.RRObjectTypes:
                 ents = api.get_entities(pid, obj_type, 0, 50)
@@ -375,7 +388,7 @@ def find_rr(fqdn, *argv):
                         Logger.debug('   {}'.format(ent))
             if len(ents):
                 if trailing_dot:
-                        rr_ents += ents
+                    rr_ents += ents
                 else:
                     for ent in ents:
                         if ent['name'] == name:
@@ -485,7 +498,6 @@ def bind_print(ent_ids):
 
 def object_find(fqdn, rr_type, value):
     fn = object_find
-    pid = None
     obj_id = None
     if rr_type == 'MX':
         (value, priority) = mx_parse(value)
@@ -517,7 +529,7 @@ def object_find(fqdn, rr_type, value):
                             if d['absoluteName'] == fqdn:
                                 if 'addresses' in d:
                                     obj_id = ent['id']
-                                elif value == d[prop_key]:
+                                elif value == d['prop_key']:
                                     obj_id = ent['id']
         pid = obj_id
     return obj_id
@@ -706,8 +718,6 @@ def delete_rr(fqdn, rr_type, *argv):
 
 def add_rr(fqdn, rr_type, value, ttl):
     fn = 'add_rr'
-    # obj_ids is a list of ids
-    obj_ids = []
     if config.Debug:
         Logger.debug('{}, Input data: {} {} {} {}'.format(fn, fqdn, rr_type, value, ttl))
     obj_prop_key = config.RRTypeMap[rr_type]['prop_key']

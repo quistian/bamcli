@@ -66,7 +66,7 @@ BAM2Bind = {
 IPv4Objects = (
         'IP4Block',
         'IP4Network',
-        'IP4Adress',
+        'IP4Address',
         'IP4DHCPRange',
         'IP4NetworkTemplate',
 )
